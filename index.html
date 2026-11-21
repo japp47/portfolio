@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jappreet Singh Chhabra</title>
+<meta name="description" content="Backend engineer in Bengaluru. I build systems that stay correct under load, and side projects that are just fun to build.">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" aria-hidden="true"><span class="cursor__dot"></span><span class="cursor__ring"></span></div>
+
+<header class="bar">
+  <a class="mark" href="#top" aria-label="Back to top">jsc<span>.</span></a>
+  <nav class="bar__nav" aria-label="Main">
+    <a href="#work" data-magnetic>work</a>
+    <a href="#now" data-magnetic>now</a>
+    <a href="#about" data-magnetic>about</a>
+    <a href="#contact" data-magnetic>contact</a>
+    <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+  </nav>
+  <p class="bar__clock mono"><span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time></p>
+</header>
+
+<main id="top">
+  <!-- HERO: a three.js dot terrain behind the words; it starts as binary noise and settles into waves -->
+  <section class="hero" aria-labelledby="hero-name">
+    <canvas class="hero__field" aria-hidden="true"></canvas>
+    <div class="hero__inner">
+      <p class="hero__hi mono" data-scramble="hi, I'm" aria-label="hi, I'm">01101000 01101001</p>
+      <h1 class="hero__name" id="hero-name">
+        <span class="line"><span class="line__in">Jappreet</span></span>
+        <span class="line"><span class="line__in">Singh <em>Chhabra</em></span></span>
+      </h1>
+      <p class="hero__role">
+        <span class="sr-only">Backend engineer.</span>
+        <span aria-hidden="true">I'm a <span class="typed" id="typed">backend engineer</span><span class="caret"></span></span>
+      </p>
+      <p class="hero__lede">I build systems that stay correct when two requests land at once, and side projects that are just fun to build. I think in binary and <em>dream in equations.</em></p>
+      <button type="button" class="motion-hint mono" data-motion hidden><i aria-hidden="true">↯</i><span>tilt or shake your phone</span></button>
+    </div>
+    <div class="hero__foot">
+      <p class="mono muted">SDE II at HashedIn by Deloitte</p>
+      <a class="scroll-cue mono" href="#work"><span>scroll</span><i aria-hidden="true"></i></a>
+      <div class="links mono">
+        <a href="https://github.com/japp47" target="_blank" rel="noopener" data-magnetic>github ↗</a>
+        <a href="https://www.linkedin.com/in/jappreetchhabra/" target="_blank" rel="noopener" data-magnetic>linkedin ↗</a>
+        <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK: an index of things I built, from GitHub -->
+  <section class="block" id="work" aria-labelledby="work-h">
+    <div class="block__head">
+      <p class="mono muted">01 / work</p>
+      <h2 id="work-h">Things I've built, <em>for work and for fun.</em></h2>
+    </div>
+    <ol class="index">
+      <li class="row" data-reveal>
+        <a href="https://99ile.in" target="_blank" rel="noopener">
+          <span class="row__n mono">01</span>
+          <span class="row__name">99ile</span>
+          <span class="row__what">A free CAT coach that works offline. Go API, Postgres sync that never skips a record.</span>
+          <span class="row__tags mono">go · postgres · pwa</span>
+          <span class="row__year mono">2026</span>
+        </a>
+      </li>
+      <li class="row" data-reveal>
+        <a href="https://github.com/japp47/local-llm-gateway" target="_blank" rel="noopener">
+          <span class="row__n mono">02</span>
+          <span class="row__name">Local LLM Gateway</span>
+          <span class="row__what">Your own models on your phone, without putting them on the internet. On npm.</span>
+          <span class="row__tags mono">fastify · ollama · mcp</span>
+          <span class="row__year mono">2026</span>
+        </a>
+      </li>
+      <li class="row" data-reveal>
+        <a href="https://github.com/japp47/Excel-Sheets" target="_blank" rel="noopener">
+          <span class="row__n mono">03</span>
+          <span class="row__name">Spreadsheet engine</span>
+          <span class="row__what">Formulas, a dependency graph and cycle checks, in plain JavaScript.</span>
+          <span class="row__tags mono">vanilla js · graphs</span>
+          <span class="row__year mono">2024</span>
+        </a>
+      </li>
+      <li class="row" data-reveal>
+        <a href="https://github.com/japp47/Version-Control-System" target="_blank" rel="noopener">
+          <span class="row__n mono">04</span>
+          <span class="row__name">My own Git</span>
+          <span class="row__what">Commits, logs and diffs, rebuilt from scratch to see how Git thinks.</span>
+          <span class="row__tags mono">node · fs · hashing</span>
+          <span class="row__year mono">2024</span>
+        </a>
+      </li>
+      <li class="row" data-reveal>
+        <a href="https://github.com/japp47/SketchGround" target="_blank" rel="noopener">
+          <span class="row__n mono">05</span>
+          <span class="row__name">SketchGround</span>
+          <span class="row__what">A shared sketchboard with sticky notes, drawn live over web sockets.</span>
+          <span class="row__tags mono">websockets · canvas</span>
+          <span class="row__year mono">2024</span>
+        </a>
+      </li>
+      <li class="row" data-reveal>
+        <a href="https://github.com/japp47/Airline-Service" target="_blank" rel="noopener">
+          <span class="row__n mono">06</span>
+          <span class="row__name">Airline microservices</span>
+          <span class="row__what">Booking, auth gateway and notifications as separate services in containers.</span>
+          <span class="row__tags mono">node · docker · mq</span>
+          <span class="row__year mono">2024</span>
+        </a>
+      </li>
+      <li class="row" data-reveal>
+        <a href="https://github.com/japp47/splitwise" target="_blank" rel="noopener">
+          <span class="row__n mono">07</span>
+          <span class="row__name">Splitwise, the graph way</span>
+          <span class="row__what">Settles a group's debts in the fewest payments with a graph algorithm.</span>
+          <span class="row__tags mono">dsa · graphs</span>
+          <span class="row__year mono">2023</span>
+        </a>
+      </li>
+    </ol>
+    <a class="more mono" href="https://github.com/japp47?tab=repositories" target="_blank" rel="noopener" data-magnetic>all 41 repositories on github ↗</a>
+  </section>
+
+  <!-- NOW: the day job, two numbers -->
+  <section class="block" id="now" aria-labelledby="now-h">
+    <div class="block__head">
+      <p class="mono muted">02 / now</p>
+      <h2 id="now-h">By day, <em>backend at HashedIn by Deloitte.</em></h2>
+    </div>
+    <div class="jobs">
+      <article class="job" data-reveal>
+        <p class="mono muted">SDE II · Jun 2026 → now</p>
+        <h3>Zora AI</h3>
+        <p>An invoice approval engine on Temporal: quorum rules, escalation, one-click approval from email, and a database that lets only the first decision count.</p>
+        <p class="job__fig"><span class="num" data-count="9">9</span><span class="mono muted">microservices</span></p>
+      </article>
+      <article class="job" data-reveal>
+        <p class="mono muted">SDE I · May 2025 → Jun 2026</p>
+        <h3>MPI New Zealand</h3>
+        <p>A government trade certification platform. I cached 8,400+ field combinations and removed N+1 queries across six services.</p>
+        <p class="job__fig"><span class="num">45s → 5s</span><span class="mono muted">p95 latency</span></p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ABOUT: "jsc" in binary beside who I am, a few real numbers, and what I am on right now -->
+  <section class="block" id="about" aria-labelledby="about-h">
+    <div class="block__head">
+      <p class="mono muted">03 / about</p>
+      <h2 id="about-h">Math first, <em>then code.</em></h2>
+    </div>
+    <div class="about">
+      <div class="about__art" data-reveal>
+        <pre class="binary" id="binary" aria-hidden="true"></pre>
+        <p class="mono muted about__art-note">01101010 01110011 01100011</p>
+      </div>
+      <div class="about__body">
+        <p class="about__lede" data-reveal>I studied computer science at JECRC University in Jaipur and spent the evenings on ICPC problems. Now I care about the parts that decide whether software is trusted: locks, retries, idempotency, and who is allowed to do what.</p>
+        <p class="about__text" data-reveal>Outside work I build things to understand them. A spreadsheet engine taught me dependency graphs, my own Git taught me how commits really work, and a sketchboard taught me web sockets. If a system has a race condition, I want to find it before its users do.</p>
+        <dl class="stats" data-reveal>
+          <div><dt class="mono muted">cgpa</dt><dd>9.24</dd></div>
+          <div><dt class="mono muted">leetcode problems</dt><dd><a class="stat-link" href="https://leetcode.com/u/jappreets4747/" target="_blank" rel="noopener">900+<span class="mono" aria-hidden="true">↗</span></a></dd></div>
+          <div><dt class="mono muted">public repos</dt><dd>41</dd></div>
+          <div><dt class="mono muted">tests on 99ile</dt><dd>1,600+</dd></div>
+        </dl>
+        <ul class="now mono" data-reveal>
+          <li><span class="muted">building</span><span>99ile and the LLM gateway</span></li>
+          <li><span class="muted">at work</span><span>an approval engine on Temporal, Zora AI</span></li>
+          <li><span class="muted">practising</span><span>system design, and DSA on <a class="u" href="https://leetcode.com/u/jappreets4747/" target="_blank" rel="noopener">leetcode ↗</a></span></li>
+          <li><span class="muted">stack</span><span>Python, Go, TypeScript, PostgreSQL</span></li>
+          <li><span class="muted">certs</span><span>Google Agents, Apollo GraphQL</span></li>
+          <li><span class="muted">awards</span><span>Top Impactor, Spot Excellence at HashedIn</span></li>
+        </ul>
+        <button type="button" class="shell-cta" data-open-terminal data-reveal><span class="shell-cta__p mono">$</span> prefer a shell? open the terminal <kbd class="mono">~</kbd></button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="contact" id="contact" aria-labelledby="contact-h">
+  <p class="mono muted">04 / contact</p>
+  <h2 id="contact-h"><a href="mailto:jappreets4747@gmail.com" class="big-link" data-scramble-hover>say hi</a></h2>
+  <p class="contact__line">Open to backend roles and interesting problems. I reply within a day.</p>
+  <div class="contact__row mono">
+    <span class="muted">© 2026 Jappreet Singh Chhabra</span>
+    <span class="links">
+      <a href="https://github.com/japp47" target="_blank" rel="noopener" data-magnetic>github</a>
+      <a href="https://www.linkedin.com/in/jappreetchhabra/" target="_blank" rel="noopener" data-magnetic>linkedin</a>
+      <a href="https://leetcode.com/u/jappreets4747/" target="_blank" rel="noopener" data-magnetic>leetcode</a>
+      <a href="mailto:jappreets4747@gmail.com" data-magnetic>email</a>
+    </span>
+  </div>
+</footer>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

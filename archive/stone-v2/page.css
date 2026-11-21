@@ -1,0 +1,54 @@
+/* Page CSS: only what sits inside a visual, plus the --p-h of the one card group and the rail. */
+
+/* the hero stage holds a live three.js canvas instead of a render frame */
+.hero__stage > [data-gl] canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; cursor: grab; }
+.hero__stage > [data-gl] canvas:active { cursor: grabbing; }
+.hero__stage .ly-spot { transition: opacity var(--dur) var(--ease); }
+.hero__stage .ly-spot[data-hidden] { opacity: 0; pointer-events: none; }
+
+#work .panel { --p-h: 336px; }
+@media (min-width: 1024px) and (max-width: 1279px) { #work .panel { --p-h: 296px; } }
+@media (max-width: 639px) { #work .panel { --p-h: 248px; } }
+
+/* three short facts under the sync lead: plain lines with a small accent tick */
+.facts { list-style: none; margin-bottom: 0; padding: 0; display: grid; gap: var(--s-3); }
+.facts li { display: grid; grid-template-columns: 16px 1fr; gap: var(--s-3); align-items: baseline; }
+.facts li::before { content: ""; width: 10px; height: 6px; border-left: 1.6px solid var(--p-accent); border-bottom: 1.6px solid var(--p-accent); transform: translateY(-3px) rotate(-45deg); }
+
+/* timeline rail (sections-library: timeline-rail) */
+.rail { list-style: none; margin: 0; padding: 0; }
+.rail > li { position: relative; display: grid; align-content: start; gap: var(--s-2); }
+.rail__panel { height: 168px; display: grid; align-content: end; gap: var(--s-1); padding: var(--s-5); }
+.rail__fig { margin: 0; font-family: var(--font-display); font-size: var(--t-stat); line-height: 1.05; letter-spacing: var(--display-tracking); }
+.rail__panel .t-small { margin: 0; }
+.rail__dot { position: relative; display: block; height: 8px; margin: var(--s-4) 0 var(--s-2); }
+.rail__dot::before { content: ""; position: absolute; left: 0; top: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--p-ink); }
+.rail > li:not(:last-child) .rail__dot::after { content: ""; position: absolute; left: 12px; right: calc(-1 * var(--gutter)); top: 3.5px; height: 1px; background: color-mix(in oklab, var(--p-ink) 18%, transparent); }
+.rail > li.is-now .rail__dot::before { background: var(--p-accent); }
+.rail > li.is-now .rail__fig { color: var(--p-accent); }
+.rail h3 { margin: 0; }
+.rail p { margin: 0; }
+.certs { margin-top: var(--s-7); }
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .rail > li { grid-column: span 6; }
+  .rail { row-gap: var(--s-7); }
+  .rail > li .rail__dot::after { display: none; }
+  .rail__panel { height: 132px; }
+}
+@media (max-width: 639px) {
+  .rail { row-gap: var(--s-5); }
+  .rail__panel { height: auto; padding: var(--s-4); }
+  .rail__panel .t-small { display: none; }
+  .rail__dot { display: none; }
+  .rail > li { grid-column: span 6; }
+  .rail__fig { font-size: 22px; }
+  .rail > li:not(:last-child) .rail__dot::after { display: none; }
+  .certs { margin-top: var(--s-5); }
+}
+
+/* the sync split's frame runs square so the code reads at full height */
+#sync .frame--split { --ratio: 92%; }
+
+/* close-word: the name hand-set so it runs line to line */
+.close__word { font-size: min(calc((100vw - 2 * var(--gut)) / 6.7), 192px); line-height: 1; white-space: nowrap; }

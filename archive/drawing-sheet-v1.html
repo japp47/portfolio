@@ -1,0 +1,777 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jappreet Singh Chhabra</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..800&family=B612:ital,wght@0,400;0,700;1,400&family=B612+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: one engineering drawing sheet. Revision table top right, a live 3D exploded view as the hero,
+   numbered sheets and details down the page, title block (contact) at the foot. Light = drafting film, dark = blueprint. */
+:root{
+  --paper:#EEF2F1; --sheet:#F7F9F8; --ink:#16202B; --muted:#4F5D6B; --faint:#77848F;
+  --line:#C9D2D8; --grid:rgba(22,32,43,.05); --accent:#C2372C; --accent-soft:rgba(194,55,44,.08);
+  --face:#FBFCFC; --side-1:#E1E8EB; --side-2:#CDD6DC;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"B612","Segoe UI",system-ui,sans-serif;
+  --mono:"B612 Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0D2744; --sheet:#102D4E; --ink:#E6EFF8; --muted:#A9BDD2; --faint:#7F9CBB;
+  --line:#2C4C72; --grid:rgba(230,239,248,.055); --accent:#FF8C5A; --accent-soft:rgba(255,140,90,.12);
+  --face:#173B66; --side-1:#112F52; --side-2:#0B223D; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0D2744; --sheet:#102D4E; --ink:#E6EFF8; --muted:#A9BDD2; --faint:#7F9CBB;
+  --line:#2C4C72; --grid:rgba(230,239,248,.055); --accent:#FF8C5A; --accent-soft:rgba(255,140,90,.12);
+  --face:#173B66; --side-1:#112F52; --side-2:#0B223D; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(to right,var(--grid) 1px,transparent 1px),linear-gradient(to bottom,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink); font-family:var(--body); font-size:15px; line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:24px 48px;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line)}
+a:hover{border-bottom-color:var(--accent)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono,.tag,.eyebrow,th,.len,.when,.k{font-family:var(--mono)}
+
+/* ---------- sheet frame ---------- */
+.frame{max-width:1180px;margin:0 auto;background:var(--sheet);border:1.5px solid var(--ink);outline:1px solid var(--line);outline-offset:6px;position:relative}
+.zones{display:grid;grid-template-columns:repeat(8,1fr);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--faint)}
+.zones span{text-align:center;padding:3px 0;border-left:1px solid var(--line)}
+.zones span:first-child{border-left:0}
+.inner{padding:clamp(18px,3.4vw,44px);display:grid;gap:clamp(48px,7vw,88px)}
+
+/* ---------- header ---------- */
+.head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:40px;align-items:start}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+h1{font-family:var(--display);font-variation-settings:"wdth" 122;font-weight:760;font-size:clamp(28px,6.6vw,74px);line-height:.94;letter-spacing:-.01em;text-transform:uppercase;margin:0;text-wrap:balance}
+.lede{font-size:clamp(16px,1.6vw,18.5px);line-height:1.55;max-width:56ch;margin:20px 0 0}
+.lede em{font-style:normal;background:linear-gradient(transparent 62%,var(--accent-soft) 62%)}
+.links{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:24px;font-family:var(--mono);font-size:12.5px;align-items:center}
+.copy{font:inherit;color:var(--ink);background:none;border:1px solid var(--ink);padding:7px 10px;cursor:pointer;display:inline-flex;gap:10px;align-items:center}
+.copy span{color:var(--accent);text-transform:uppercase;font-size:10.5px;letter-spacing:.12em}
+.copy:hover{background:var(--accent-soft)}
+a.todo{border-bottom-style:dashed}
+
+table{border-collapse:collapse;width:100%}
+th{font-weight:400;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);text-align:left}
+.revs{border:1px solid var(--ink);font-size:12.5px}
+.revs caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--faint);padding-bottom:6px;text-transform:uppercase}
+.revs th,.revs td{padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+.revs th{border-bottom:1px solid var(--ink)}
+.revs td:first-child{font-family:var(--mono);font-weight:700;width:34px;text-align:center;border-right:1px solid var(--line)}
+.revs td:nth-child(2){font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;width:78px}
+.revs tr.cur td:first-child{color:var(--accent)}
+.revs tr:last-child td{border-bottom:0}
+
+/* ---------- section heads ---------- */
+.sec{display:grid;gap:18px;min-width:0}
+.sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tag{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:2px 7px;white-space:nowrap}
+h2{font-family:var(--display);font-variation-settings:"wdth" 112;font-weight:650;font-size:clamp(21px,2.6vw,30px);letter-spacing:-.005em;line-height:1.1;margin:0;text-wrap:balance}
+.sec-head .rule{flex:1;min-width:30px;height:1px;background:var(--line);align-self:center}
+.sec-head .meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sec-lede{margin:0;max-width:68ch;color:var(--muted);font-size:15.5px}
+.sec-lede b{color:var(--ink);font-weight:700}
+
+/* ---------- altitude switch ---------- */
+.alt{display:inline-flex;border:1px solid var(--ink)}
+.alt button{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:none;border:0;border-left:1px solid var(--line);color:var(--muted);padding:8px 13px;cursor:pointer}
+.alt button:first-child{border-left:0}
+.alt button[aria-pressed="true"]{color:var(--ink);background:var(--accent-soft);box-shadow:inset 0 -2px 0 var(--accent)}
+
+/* ---------- drawings ---------- */
+.drawing{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);border:1px solid var(--line)}
+.drawing.flip{grid-template-columns:minmax(0,1fr) minmax(0,1.55fr)}
+.drawing.flip .stage{order:2;border-left:1px solid var(--line);border-right:0}
+.stage{position:relative;aspect-ratio:5/4;max-width:100%;border-right:1px solid var(--line);overflow:hidden;touch-action:pan-y;cursor:grab}
+.stage:active{cursor:grabbing}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage svg.callouts{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.callouts .ld{fill:none;stroke:var(--muted);stroke-width:1}
+.callouts .an{fill:var(--ink)}
+.callouts .bl{fill:var(--sheet);stroke:var(--ink);stroke-width:1}
+.callouts .bn{font-family:var(--mono);font-size:11px;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
+.callouts g.hot .bl{stroke:var(--accent);fill:var(--accent-soft)}
+.callouts g.hot .ld{stroke:var(--accent)}
+.callouts g.hot .bn{fill:var(--accent)}
+.hint{position:absolute;left:12px;bottom:10px;margin:0;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);pointer-events:none}
+.fallback{position:absolute;inset:0;display:none;place-items:center;padding:24px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.no3d .fallback{display:grid}
+.no3d .hint{display:none}
+
+.legend{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.legend .cap{margin:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.legend ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.legend li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;padding:8px 6px;margin:0 -6px;cursor:default;transition:background .2s ease-out}
+.legend li.hot{background:var(--accent-soft)}
+.legend .num{width:22px;height:22px;border:1px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:10.5px;margin-top:1px}
+.legend li.hot .num{border-color:var(--accent);color:var(--accent)}
+.legend b{display:block;font-weight:700;font-size:14.5px;line-height:1.35}
+.legend li span:not(.num){display:block;color:var(--muted);font-size:13.5px;line-height:1.5}
+.legend .foot{margin:0;font-family:var(--mono);font-size:11.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.code{margin:0;font-family:var(--mono);font-size:11.5px;line-height:1.65;background:var(--paper);border:1px solid var(--line);padding:12px 14px;overflow-x:auto;color:var(--ink);white-space:pre}
+.code .c{color:var(--accent)}
+
+/* ---------- experience: dimension line ---------- */
+.dim{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));position:relative;padding-top:40px}
+.dim::before{content:"";position:absolute;left:0;right:0;top:24px;border-top:1px solid var(--ink)}
+.seg{position:relative;padding:12px 18px 0 16px;display:grid;gap:3px;align-content:start;min-width:0}
+.seg::before,.seg:last-child::after{content:"";position:absolute;top:-24px;height:calc(100% + 24px);border-left:1px solid var(--line)}
+.seg::before{left:0}
+.seg:last-child::after{right:0}
+.seg i{position:absolute;top:-22px;left:-6px;width:12px;border-top:1.5px solid var(--ink);transform:rotate(-45deg)}
+.seg:last-child i.end{left:auto;right:-6px}
+.len{position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:var(--sheet);padding:0 8px;font-size:11px;white-space:nowrap}
+.seg.now .len{color:var(--accent)}
+.seg b{font-weight:700;font-size:15px;line-height:1.35}
+.seg span{color:var(--muted);font-size:13.5px}
+.when{font-size:11px;color:var(--faint);margin-top:6px}
+.nts{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--faint);border:1px solid var(--line);padding:1px 6px}
+
+/* ---------- MPI detail ---------- */
+.mpi{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 44px;border:1px solid var(--line);padding:22px}
+.k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 12px}
+.bars{display:grid;gap:12px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) 92px;gap:12px;align-items:center}
+.bar .track{height:12px;border:1px solid var(--line);position:relative}
+.bar .track i{position:absolute;inset:-1px auto -1px -1px;background:var(--ink)}
+.bar .track i.acc{background:var(--accent)}
+.bar span{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--faint);margin-right:104px;margin-top:2px}
+.facts{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.facts li{display:grid;grid-template-columns:86px minmax(0,1fr);gap:14px;font-size:14px;color:var(--muted);line-height:1.5}
+.facts b{font-family:var(--display);font-variation-settings:"wdth" 115;font-weight:700;font-size:22px;color:var(--ink);line-height:1.1;font-variant-numeric:tabular-nums}
+
+/* ---------- parts list ---------- */
+.bom-wrap{overflow-x:auto;border:1px solid var(--ink)}
+.bom{min-width:620px;font-size:13.5px}
+.bom th,.bom td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.bom th{border-bottom:1px solid var(--ink)}
+.bom td:first-child{font-family:var(--mono);color:var(--faint);width:52px;border-right:1px solid var(--line);font-variant-numeric:tabular-nums}
+.bom td:nth-child(2){font-weight:700;width:170px}
+.bom td:last-child{font-family:var(--mono);font-size:11.5px;color:var(--muted);width:190px}
+.bom tr:last-child td{border-bottom:0}
+.note{margin:0;font-family:var(--mono);font-size:11px;color:var(--faint)}
+
+/* ---------- approvals + margin notes ---------- */
+.twin{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(40px,5vw,64px)}
+.stamps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--ink)}
+.stamp{padding:12px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:grid;gap:2px;align-content:start}
+.stamp:nth-child(2n){border-right:0}
+.stamp:nth-last-child(-n+2){border-bottom:0}
+.stamp .k{margin:0}
+.stamp b{font-size:14px;line-height:1.35}
+.stamp span{font-size:12.5px;color:var(--muted)}
+.margin{display:grid;gap:16px}
+.mnote{display:grid;grid-template-columns:34px minmax(0,1fr);gap:14px;align-items:start}
+.mnote svg{width:34px;height:34px;display:block}
+.mnote svg *{fill:none;stroke:var(--ink);stroke-width:1.2;vector-effect:non-scaling-stroke}
+.mnote svg .f{fill:var(--accent-soft);stroke:var(--accent)}
+.mnote p{margin:0;font-size:14.5px;line-height:1.55;color:var(--muted)}
+.mnote p b{color:var(--ink)}
+
+/* ---------- ask + title block ---------- */
+.ask{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:end;border-top:1.5px solid var(--ink);padding-top:22px}
+.ask p{margin:0;font-family:var(--display);font-variation-settings:"wdth" 108;font-weight:560;font-size:clamp(19px,2.3vw,26px);line-height:1.25;max-width:34ch;text-wrap:balance}
+.tb{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1.5px solid var(--ink)}
+.tb div{padding:9px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
+.tb div:nth-child(4n){border-right:0}
+.tb div:nth-last-child(-n+4){border-bottom:0}
+.tb .k{margin:0 0 2px;font-size:9.5px}
+.tb p{margin:0;font-size:13px;overflow-wrap:anywhere}
+.tb .big p{font-family:var(--display);font-variation-settings:"wdth" 118;font-weight:700;text-transform:uppercase;font-size:14px}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .head{grid-template-columns:1fr}
+  .drawing,.drawing.flip{grid-template-columns:1fr}
+  .drawing.flip .stage{order:0;border-left:0}
+  .stage{border-right:0;border-bottom:1px solid var(--line)}
+  .twin,.mpi{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  body{font-size:14.5px}
+  .zones{grid-template-columns:repeat(4,1fr)}
+  .zones span:nth-child(n+5){display:none}
+  .frame{outline-offset:4px}
+  .stage{aspect-ratio:1/1}
+  h1{font-variation-settings:"wdth" 108}
+  .dim{grid-template-columns:1fr;padding-top:0;padding-left:30px}
+  .dim::before{left:10px;right:auto;top:0;bottom:0;border-top:0;border-left:1px solid var(--ink)}
+  .seg{padding:14px 0 18px 10px}
+  .seg::before,.seg:last-child::after{display:none}
+  .seg i{top:6px;left:-26px;width:12px}
+  .seg:last-child i.end{top:auto;bottom:0;left:-26px;right:auto}
+  .len{position:static;transform:none;padding:0;background:none;order:-1}
+  .ask{grid-template-columns:1fr}
+  .tb{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tb div:nth-child(4n){border-right:1px solid var(--line)}
+  .tb div:nth-child(2n){border-right:0}
+  .tb div:nth-last-child(-n+4){border-bottom:1px solid var(--line)}
+  .tb div:nth-last-child(-n+2){border-bottom:0}
+  .stamps{grid-template-columns:1fr}
+  .stamp{border-right:0}
+  .stamp:nth-last-child(-n+2){border-bottom:1px solid var(--line)}
+  .stamp:last-child{border-bottom:0}
+  .facts li{grid-template-columns:72px minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="frame">
+  <div class="zones" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+  <div class="inner">
+
+    <!-- ================= HEADER ================= -->
+    <header class="head">
+      <div>
+        <p class="eyebrow">Backend engineer · SDE II · Bengaluru</p>
+        <h1>Jappreet Singh Chhabra</h1>
+        <p class="lede">I build backend systems that have to <em>stay correct when two requests land at once</em>: approval workflows, sync protocols, authorization. SDE&nbsp;II at HashedIn by Deloitte, and I run one product of my own in production.</p>
+        <div class="links">
+          <button class="copy" type="button" id="copy-email" data-copy="jappreets4747@gmail.com">jappreets4747@gmail.com <span>Copy</span></button>
+          <a href="https://99ile.in" target="_blank" rel="noopener">99ile.in ↗</a>
+          <a class="todo" href="#" title="Add your GitHub URL">GitHub ↗</a>
+          <a class="todo" href="#" title="Add your LinkedIn URL">LinkedIn ↗</a>
+        </div>
+      </div>
+      <table class="revs">
+        <caption>Revisions</caption>
+        <thead><tr><th>Rev</th><th>Date</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr class="cur"><td>E</td><td>Jun 2026</td><td>Promoted to SDE II. Approval engine for Zora AI.</td></tr>
+          <tr><td>D</td><td>2026</td><td>99ile in production. Local LLM Gateway on npm.</td></tr>
+          <tr><td>C</td><td>2025</td><td>Top Impactor and Spot Excellence awards.</td></tr>
+          <tr><td>B</td><td>May 2025</td><td>Joined HashedIn by Deloitte as SDE I.</td></tr>
+          <tr><td>A</td><td>2021</td><td>B.Tech CSE at JECRC University.</td></tr>
+        </tbody>
+      </table>
+    </header>
+
+    <!-- ================= SHEET 1 / HERO ================= -->
+    <section class="sec" id="sync" aria-labelledby="h-sync">
+      <div class="sec-head">
+        <span class="tag">Sheet 1</span><h2 id="h-sync">99ile sync engine</h2><span class="rule"></span>
+        <div class="alt" role="group" aria-label="Read the drawing at">
+          <button type="button" id="alt-product" data-alt="product" aria-pressed="false">Product</button>
+          <button type="button" id="alt-system" data-alt="system" aria-pressed="true">System</button>
+          <button type="button" id="alt-craft" data-alt="craft" aria-pressed="false">Craft</button>
+        </div>
+      </div>
+      <p class="sec-lede"><b>99ile</b> is a CAT exam prep app I built and run alone: a Go API on PostgreSQL&nbsp;17, a React&nbsp;19 PWA and a Chrome extension. Read it as a product, as a system, or down at the one bug that mattered.</p>
+      <div class="drawing" data-machine="hero">
+        <div class="stage"><canvas aria-hidden="true"></canvas><svg class="callouts" aria-hidden="true"></svg><p class="hint">Drag to turn · hover a part</p><p class="fallback">The 3D view needs WebGL. The numbered parts list beside it has everything.</p></div>
+        <div class="legend"><p class="cap"></p><ol></ol><pre class="code" hidden></pre><p class="foot" hidden></p></div>
+      </div>
+    </section>
+
+    <!-- ================= DETAIL A / EXPERIENCE ================= -->
+    <section class="sec" aria-labelledby="h-exp">
+      <div class="sec-head"><span class="tag">Detail A</span><h2 id="h-exp">Experience</h2><span class="rule"></span><span class="nts" title="Not to scale">NTS</span></div>
+      <div class="dim">
+        <div class="seg"><i></i><span class="len">48 mo</span><b>JECRC University</b><span>B.Tech, Computer Science · CGPA 9.24 / 10</span><span class="when">2021 – 2025 · Jaipur</span></div>
+        <div class="seg"><i></i><span class="len">13 mo</span><b>SDE I · HashedIn by Deloitte</b><span>MPI New Zealand, government trade certification</span><span class="when">May 2025 – Jun 2026</span></div>
+        <div class="seg now"><i></i><i class="end"></i><span class="len">5 mo · running</span><b>SDE II · HashedIn by Deloitte</b><span>Zora AI, enterprise accounts payable</span><span class="when">Jun 2026 – now · Bengaluru</span></div>
+      </div>
+    </section>
+
+    <!-- ================= SHEET 2 / ZORA ================= -->
+    <section class="sec" aria-labelledby="h-zora">
+      <div class="sec-head"><span class="tag">Sheet 2</span><h2 id="h-zora">Approval engine for Zora AI</h2><span class="rule"></span><span class="meta">Client work · 2026</span></div>
+      <p class="sec-lede">Enterprise accounts payable, <b>9 microservices</b>. An invoice approval must be decided exactly once, by someone allowed to decide it, against data that still holds at that moment.</p>
+      <div class="drawing flip" data-machine="zora">
+        <div class="stage"><canvas aria-hidden="true"></canvas><svg class="callouts" aria-hidden="true"></svg><p class="hint">Drag to turn · hover a part</p><p class="fallback">The 3D view needs WebGL. The numbered parts list beside it has everything.</p></div>
+        <div class="legend"><p class="cap"></p><ol></ol><p class="foot" hidden></p></div>
+      </div>
+    </section>
+
+    <!-- ================= DETAIL B / MPI ================= -->
+    <section class="sec" aria-labelledby="h-mpi">
+      <div class="sec-head"><span class="tag">Detail B</span><h2 id="h-mpi">Trade certification for MPI New Zealand</h2><span class="rule"></span><span class="meta">Client work · 2025–26</span></div>
+      <div class="mpi">
+        <div>
+          <p class="k">p95 API workflow latency, to scale</p>
+          <div class="bars">
+            <div class="bar"><div class="track"><i style="width:100%"></i></div><span>45 s before</span></div>
+            <div class="bar"><div class="track"><i class="acc" style="width:11.1%"></i></div><span>~5 s after</span></div>
+          </div>
+          <div class="scale" aria-hidden="true"><span>0</span><span>15</span><span>30</span><span>45 s</span></div>
+        </div>
+        <ul class="facts">
+          <li><b>−80%</b><span>redundant DB calls, by caching 8,400+ field combinations (120 products × 70 processes) in Redis and DynamoDB.</span></li>
+          <li><b>N+1</b><span>reference-data queries removed with a single-pass BFS collector and batched reads, reused in validation across 6+ services at no extra DB cost.</span></li>
+          <li><b>12+</b><span>roles in a two-level authorization model on AWS Verified Permissions (Cedar), scoped by country, port, agency and certificate.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= SHEET 3 / GATEWAY ================= -->
+    <section class="sec" aria-labelledby="h-gw">
+      <div class="sec-head"><span class="tag">Sheet 3</span><h2 id="h-gw">Local LLM Gateway</h2><span class="rule"></span><span class="meta"><a class="todo" href="#" title="Add npm URL">npm</a> · <a class="todo" href="#" title="Add GitHub URL">GitHub</a></span></div>
+      <p class="sec-lede">A local-first assistant for Ollama, published on npm under <b>MIT</b>. It reaches your phone over a private tunnel and never exposes the model server to the network.</p>
+      <div class="drawing" data-machine="gateway">
+        <div class="stage"><canvas aria-hidden="true"></canvas><svg class="callouts" aria-hidden="true"></svg><p class="hint">Drag to turn · hover a part</p><p class="fallback">The 3D view needs WebGL. The numbered parts list beside it has everything.</p></div>
+        <div class="legend"><p class="cap"></p><ol></ol><p class="foot" hidden></p></div>
+      </div>
+    </section>
+
+    <!-- ================= DETAIL C / PARTS LIST ================= -->
+    <section class="sec" aria-labelledby="h-bom">
+      <div class="sec-head"><span class="tag">Detail C</span><h2 id="h-bom">Parts list</h2><span class="rule"></span></div>
+      <div class="bom-wrap">
+        <table class="bom">
+          <thead><tr><th>Item</th><th>Part</th><th>Specification</th><th>Fitted in</th></tr></thead>
+          <tbody>
+            <tr><td>01</td><td>Languages</td><td>Python, Go, TypeScript, SQL, Java, JavaScript</td><td>Zora · 99ile · Gateway</td></tr>
+            <tr><td>02</td><td>Services</td><td>FastAPI, Fastify, Node.js, Spring Boot, GraphQL, REST, OpenAPI</td><td>Gateway · MPI NZ</td></tr>
+            <tr><td>03</td><td>Workflows</td><td>Temporal, AWS Step Functions</td><td>Zora · MPI NZ</td></tr>
+            <tr><td>04</td><td>Data</td><td>PostgreSQL, Redis, DynamoDB, Cosmos DB, MySQL, MongoDB, SQLite, RabbitMQ, Typesense</td><td>all four</td></tr>
+            <tr><td>05</td><td>Access</td><td>OpenFGA, Cedar, Cognito, OAuth 2.0, Keycloak</td><td>Zora · MPI NZ</td></tr>
+            <tr><td>06</td><td>Cloud</td><td>AWS Lambda, AppSync, Aurora, S3, SST/CDK, Docker, Cloudflare</td><td>MPI NZ · 99ile</td></tr>
+            <tr><td>07</td><td>GenAI</td><td>Ollama, MCP, LangChain, LangGraph, RAG</td><td>Gateway</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Each part is listed with the system it was fitted in. No skill bars.</p>
+    </section>
+
+    <!-- ================= APPROVALS + MARGIN ================= -->
+    <div class="twin">
+      <section class="sec" aria-labelledby="h-appr">
+        <div class="sec-head"><span class="tag">Detail D</span><h2 id="h-appr">Approvals</h2><span class="rule"></span></div>
+        <div class="stamps">
+          <div class="stamp"><p class="k">2025 · HashedIn</p><b>Top Impactor Award</b><span>and Spot Excellence Award</span></div>
+          <div class="stamp"><p class="k">2026 · Google</p><b>Enterprise Agent Development</b><span>and Enterprise Deployment</span></div>
+          <div class="stamp"><p class="k">2025 · Apollo</p><b>GraphQL Developer Associate</b><span>certification</span></div>
+          <div class="stamp"><p class="k">2023 · SIH</p><b>Smart India Hackathon</b><span>third place, preliminary round</span></div>
+        </div>
+      </section>
+      <section class="sec" aria-labelledby="h-margin">
+        <div class="sec-head"><span class="tag">Margin</span><h2 id="h-margin">Notes off the drawing</h2><span class="rule"></span></div>
+        <div class="margin">
+          <div class="mnote">
+            <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="4" y="12" width="26" height="16"/><path d="M4 17h26M10 12V7h14v5"/><rect class="f" x="14" y="20" width="6" height="8"/></svg>
+            <p><b>The shop in Kanpur.</b> I help run the family's truck spare-parts shop. Most of what I know about requirements, I learned at that counter.</p>
+          </div>
+          <div class="mnote">
+            <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M4 30V14L17 5l13 9v16z"/><path d="M4 30h26"/><rect class="f" x="14" y="20" width="6" height="10"/></svg>
+            <p><b>A 16 × 55 ft corner house.</b> Redesigning the elevation and balcony. Constraint solving with bricks.</p>
+          </div>
+          <div class="mnote">
+            <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="4" y="10" width="26" height="16" rx="3"/><path d="M10 18h6M13 15v6"/><circle class="f" cx="23" cy="18" r="2.4"/></svg>
+            <p><b>Small games.</b> Fixed-timestep loops and deterministic state teach me things a service never will.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= ASK + TITLE BLOCK ================= -->
+    <footer class="sec">
+      <div class="ask">
+        <p>Looking for backend work at a product or fintech team where correctness under concurrency is the real problem.</p>
+        <button class="copy" type="button" id="copy-email-2" data-copy="jappreets4747@gmail.com">jappreets4747@gmail.com <span>Copy</span></button>
+      </div>
+      <div class="tb" aria-label="Title block">
+        <div class="big"><p class="k">Drawn by</p><p>Jappreet Singh Chhabra</p></div>
+        <div><p class="k">Role</p><p>Backend engineer, SDE II</p></div>
+        <div><p class="k">Location</p><p>Bengaluru, India</p></div>
+        <div><p class="k">Contact</p><p>jappreets4747@gmail.com</p></div>
+        <div><p class="k">Scale</p><p>NTS</p></div>
+        <div><p class="k">Sheet</p><p>1 of 1</p></div>
+        <div><p class="k">Date</p><p>21 · 11 · 2026</p></div>
+        <div><p class="k">Rev</p><p>E</p></div>
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<script type="module">
+const SPECS = {
+  hero: {
+    view: 330,
+    parts: [ // bottom → top
+      { id:'db',     name:'PostgreSQL 17', sub:'Hands out sequence numbers before commit.', w:150, d:110, h:22, detail:'rows' },
+      { id:'head',   name:'Sync head row', sub:'One locked row per account, so pushes go single file.', w:118, d:86, h:10, detail:'ring' },
+      { id:'api',    name:'Go API', sub:'Account-free device sync, OAuth sign-in and AI endpoints.', w:140, d:100, h:14, detail:'split' },
+      { id:'edge',   name:'Cloudflare', sub:'The edge in front of the API.', w:150, d:110, h:5, detail:'grid' },
+      { id:'device', name:'PWA and Chrome extension', sub:'Offline-first. Changes queue on the device until it reconnects.', w:76, d:112, h:8, detail:'phone' },
+    ],
+    initial: 'system',
+    states: {
+      product: { gap:0, zoom:1.05, person:true, caption:'Product altitude · what a student sees',
+        notes: [
+          { on:'person', t:'CAT aspirant', s:'Practises on any device. No account needed to start.' },
+          { on:'device', t:'99ile', s:'Offline-first exam prep, live at 99ile.in, plus a Chrome extension.' },
+          { on:'db', t:'Nothing lost', s:'Progress follows the student across devices once they are back online.' },
+        ] },
+      system: { gap:30, caption:'System altitude · five parts, one write path' },
+      craft: { gap:30, zoom:1.35, focus:['head','db'], caption:'Craft altitude · the bug that mattered',
+        notes: [
+          { on:'head', t:'The fix: a locked head row', s:'Each push takes its account’s head row FOR UPDATE. The next push waits its turn.' },
+          { on:'db', t:'The trap', s:'Postgres assigns sequence numbers before commit. Two pushes can commit out of order, and a device cursor skips a record for good.' },
+        ],
+        code: `<span class="c">-- shape of the fix, simplified</span>
+BEGIN;
+SELECT seq FROM sync_head
+ WHERE account = $1
+ FOR UPDATE;   <span class="c">-- next push waits</span>
+INSERT INTO changes
+ VALUES ($1, $seq + 1, $body);
+UPDATE sync_head SET seq = $seq + 1
+ WHERE account = $1;
+COMMIT;`,
+        foot: 'Guarded by 1,600+ automated tests.' },
+    },
+  },
+  zora: {
+    view: 300,
+    parts: [
+      { id:'pg',   name:'PostgreSQL constraints', sub:'First decision wins. A replayed click changes nothing.', w:150, d:110, h:18, detail:'rows' },
+      { id:'sap',  name:'SAP OData validations', sub:'Fail-closed checks on blocked suppliers, payment terms and GL codes. 55 active rules, ~143 across 12 YAML files.', w:140, d:104, h:12, detail:'slots' },
+      { id:'fga',  name:'OpenFGA through ZARS', sub:'Eligibility comes from group and role grants, and is checked again at decision time.', w:124, d:92, h:10, detail:'ring' },
+      { id:'tmp',  name:'Temporal approval workflow', sub:'4 quorum strategies, 1–3 tiers, escalation, delegation, restart after an invoice edit.', w:140, d:104, h:16, detail:'split' },
+      { id:'mail', name:'One-click email approval', sub:'No login. A signed identity token carries the approver.', w:96, d:70, h:6, detail:'env' },
+    ],
+    initial: 'assembled', explodeTo: 'exploded',
+    states: { assembled:{ gap:0, caption:'Assembled · scroll to explode' }, exploded:{ gap:34, caption:'Exploded · top to bottom, one approval' } },
+    foot: 'Python · Temporal · OpenFGA · SAP OData · PostgreSQL',
+  },
+  gateway: {
+    view: 320,
+    parts: [
+      { id:'ollama', name:'Ollama, bound to localhost', sub:'The model server never listens on the network.', w:120, d:90, h:16, detail:'ring' },
+      { id:'store',  name:'SQLite, or Postgres + Redis', sub:'Conversations, memory, backup and restore. 155 end-to-end checks against real Ollama.', w:150, d:110, h:14, detail:'rows' },
+      { id:'router', name:'Router and MCP gate', sub:'Local or cloud by privacy mode. Every tool call needs approval and lands in an audit log.', w:140, d:104, h:10, detail:'slots' },
+      { id:'api',    name:'Fastify API, CLI, web chat', sub:'Streaming, branchable conversations, source-cited retrieval, OpenAPI 3.1.', w:140, d:104, h:14, detail:'split' },
+      { id:'tunnel', name:'Tailscale HTTPS', sub:'Opt-in private route from phone to laptop.', w:150, d:110, h:4, detail:'grid' },
+      { id:'phone',  name:'Phone', sub:'Paired by QR code. Each device gets its own revocable credential.', w:60, d:100, h:7, detail:'phone' },
+    ],
+    initial: 'assembled', explodeTo: 'exploded',
+    states: { assembled:{ gap:0, caption:'Assembled · scroll to explode' }, exploded:{ gap:28, caption:'Exploded · phone at the top, model at the bottom' } },
+    foot: 'TypeScript · Fastify · Ollama · MCP · Docker',
+  },
+};
+
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TAU = 110; // ms; exponential ease-out, settles in ~0.5s
+
+/* ---------- legends first: they work with or without WebGL ---------- */
+const machines = [...document.querySelectorAll('[data-machine]')].map(root => {
+  const spec = SPECS[root.dataset.machine];
+  const m = { root, spec, legend: root.querySelector('.legend'), state: spec.initial, hot: null, gl: null };
+  renderLegend(m);
+  m.legend.addEventListener('mouseover', e => { const li = e.target.closest('li'); if (li) setHot(m, li.dataset.on); });
+  m.legend.addEventListener('mouseleave', () => setHot(m, null));
+  return m;
+});
+
+function notesFor(m, s = m.state) {
+  const st = m.spec.states[s];
+  return st.notes || m.spec.parts.slice().reverse().map(p => ({ on: p.id, t: p.name, s: p.sub }));
+}
+function renderLegend(m) {
+  const st = m.spec.states[m.state];
+  m.notes = notesFor(m);
+  m.legend.querySelector('.cap').textContent = st.caption;
+  m.legend.querySelector('ol').innerHTML = m.notes.map((n, i) =>
+    `<li data-on="${n.on}"><span class="num">${i + 1}</span><div><b>${n.t}</b><span>${n.s}</span></div></li>`).join('');
+  const code = m.legend.querySelector('.code');
+  if (code) { code.hidden = !st.code; code.innerHTML = st.code || ''; }
+  const foot = m.legend.querySelector('.foot');
+  const ft = st.foot || m.spec.foot;
+  foot.hidden = !ft; foot.textContent = ft || '';
+}
+function setHot(m, id) {
+  m.hot = id;
+  m.legend.querySelectorAll('li').forEach(li => li.classList.toggle('hot', li.dataset.on === id));
+  if (m.gl) m.gl.hotChanged();
+}
+
+/* ---------- altitude switch ---------- */
+const hero = machines.find(m => m.root.dataset.machine === 'hero');
+document.querySelectorAll('.alt button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.alt button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  hero.state = b.dataset.alt; renderLegend(hero);
+  if (hero.gl) hero.gl.apply(0);
+}));
+
+/* ---------- copy email ---------- */
+document.querySelectorAll('.copy').forEach(btn => btn.addEventListener('click', () => {
+  const label = btn.querySelector('span');
+  const done = t => { label.textContent = t; setTimeout(() => label.textContent = 'Copy', 1600); };
+  const fallback = () => {
+    const r = document.createRange(); r.selectNodeContents(btn.firstChild.parentNode);
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r); done('Selected');
+  };
+  try { navigator.clipboard.writeText(btn.dataset.copy).then(() => done('Copied'), fallback); } catch { fallback(); }
+}));
+
+/* ---------- three.js ---------- */
+let T;
+try { T = await import('https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js'); } catch { T = null; }
+
+function palette() {
+  const cs = getComputedStyle(document.documentElement);
+  const c = n => new T.Color(cs.getPropertyValue(n).trim());
+  return { ink: c('--ink'), muted: c('--muted'), face: c('--face'), s1: c('--side-1'), s2: c('--side-2'), accent: c('--accent') };
+}
+const recolorAll = () => machines.forEach(m => m.gl && m.gl.recolor());
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', recolorAll);
+new MutationObserver(recolorAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+function detailGeometry(p) {
+  const w = p.w / 2, d = p.d / 2, s = [];
+  const R = (x, z, a, b) => s.push([x, z, x + a, z], [x + a, z, x + a, z + b], [x + a, z + b, x, z + b], [x, z + b, x, z]);
+  switch (p.detail) {
+    case 'rows': for (let i = 1; i < 5; i++) { const z = -d + i * p.d / 5; s.push([-w + 8, z, w - 8, z]); } break;
+    case 'grid': R(-w + 10, -d + 10, p.w - 20, p.d - 20); for (let i = 1; i < 4; i++) { const x = -w + 10 + i * (p.w - 20) / 4; s.push([x, -d + 10, x, d - 10]); } break;
+    case 'split': s.push([0, -d + 8, 0, d - 8]); R(-w + 10, -d + 10, w - 18, p.d * .42); R(8, -d + 10, w - 18, p.d * .42); break;
+    case 'ring': { const r = Math.min(w, d) * .5; for (let i = 0; i < 40; i++) { const a = i / 40 * 6.2832, b = (i + 1) / 40 * 6.2832; s.push([Math.cos(a) * r, Math.sin(a) * r, Math.cos(b) * r, Math.sin(b) * r]); } s.push([-r * .4, 0, r * .4, 0], [0, -r * .4, 0, r * .4]); break; }
+    case 'slots': { const cw = (p.w - 20) / 3; for (let i = 0; i < 3; i++) R(-w + 10 + i * cw + 3, -d + 12, cw - 6, p.d - 24); break; }
+    case 'phone': R(-w + 8, -d + 10, p.w - 16, p.d - 28); s.push([-6, d - 9, 6, d - 9]); break;
+    case 'env': R(-w + 10, -d + 10, p.w - 20, p.d - 20); s.push([-w + 10, -d + 10, 0, 2], [0, 2, w - 10, -d + 10]); break;
+  }
+  const y = p.h / 2 + .3, pos = [];
+  s.forEach(([a, b, c, e]) => pos.push(a, y, b, c, y, e));
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); return g;
+}
+
+class Drawing {
+  constructor(m) {
+    this.m = m; const spec = m.spec;
+    this.stage = m.root.querySelector('.stage');
+    this.svg = this.stage.querySelector('.callouts');
+    this.renderer = new T.WebGLRenderer({ canvas: this.stage.querySelector('canvas'), antialias: true, alpha: true });
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    this.scene = new T.Scene();
+    this.rig = new T.Group(); this.scene.add(this.rig);
+    this.cam = new T.OrthographicCamera(-1, 1, 1, -1, 1, 4000);
+    this.col = palette();
+    this.vars = [];
+    const v = c => { const o = { c, t: c }; this.vars.push(o); return o; };
+    this.yaw = v(0); this.zoom = v(1); this.ty = v(0); this.label = v(0);
+
+    this.parts = spec.parts.map(p => {
+      const geo = new T.BoxGeometry(p.w, p.h, p.d);
+      const mk = col => new T.MeshBasicMaterial({ color: col, transparent: true, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+      const mats = [mk(this.col.s1), mk(this.col.s1), mk(this.col.face), mk(this.col.face), mk(this.col.s2), mk(this.col.s2)];
+      const mesh = new T.Mesh(geo, mats);
+      const edgeMat = new T.LineBasicMaterial({ color: this.col.ink, transparent: true });
+      const detMat = new T.LineBasicMaterial({ color: this.col.muted, transparent: true });
+      const g = new T.Group();
+      g.add(mesh, new T.LineSegments(new T.EdgesGeometry(geo), edgeMat), new T.LineSegments(detailGeometry(p), detMat));
+      this.rig.add(g);
+      mesh.userData.id = p.id;
+      return { p, g, mesh, mats, edgeMat, detMat, y: v(0), op: v(1), lift: v(0), heat: v(0) };
+    });
+    this.byId = Object.fromEntries(this.parts.map(P => [P.p.id, P]));
+
+    if (spec.states.product) {
+      const mat = new T.LineBasicMaterial({ color: this.col.ink, transparent: true, opacity: 0 });
+      const body = new T.LineSegments(new T.EdgesGeometry(new T.CylinderGeometry(10, 13, 36, 10)), mat);
+      const head = new T.LineSegments(new T.EdgesGeometry(new T.IcosahedronGeometry(9, 0)), mat);
+      body.position.y = 18; head.position.y = 46;
+      this.person = new T.Group(); this.person.add(body, head);
+      this.person.position.set(-96, 0, 64);
+      this.personMat = mat; this.personOp = v(0);
+      this.rig.add(this.person);
+    }
+
+    this.ray = new T.Raycaster(); this.ptr = new T.Vector2();
+    this.bindPointer();
+    new ResizeObserver(() => this.resize()).observe(this.stage);
+    this.resize();
+
+    // first frame
+    const st = spec.states[m.state];
+    if (spec.explodeTo) {
+      this.apply(0, true);
+      const io = new IntersectionObserver(es => {
+        if (!es.some(e => e.isIntersecting)) return;
+        io.disconnect();
+        m.state = spec.explodeTo; renderLegend(m); this.apply(70);
+      }, { threshold: .45 });
+      io.observe(this.stage);
+    } else {
+      const pos = this.layout(st.gap);
+      this.parts.forEach(P => { P.y.c = pos[P.p.id] + 150; P.op.c = 0; });
+      this.label.c = 0;
+      this.apply(reduce ? 0 : 110);
+    }
+  }
+
+  layout(gap) {
+    let y = 0; const out = {};
+    this.m.spec.parts.forEach(p => { out[p.id] = y + p.h / 2; y += p.h + gap; });
+    const half = (y - gap) / 2;
+    for (const k in out) out[k] -= half;
+    return out;
+  }
+
+  apply(stagger = 0, instant = false) {
+    const st = this.m.spec.states[this.m.state];
+    const pos = this.layout(st.gap);
+    this.parts.forEach((P, i) => {
+      const go = () => {
+        P.y.t = pos[P.p.id];
+        P.op.t = st.focus && !st.focus.includes(P.p.id) ? .06 : 1;
+        if (instant || reduce) { P.y.c = P.y.t; P.op.c = P.op.t; }
+        this.kick();
+      };
+      stagger && !reduce ? setTimeout(go, i * stagger) : go();
+    });
+    this.zoom.t = st.zoom || 1;
+    this.ty.t = st.focus ? st.focus.reduce((a, id) => a + pos[id], 0) / st.focus.length : 0;
+    if (this.person) {
+      this.personOp.t = st.person ? 1 : 0;
+      this.person.position.y = this.layout(0)[this.m.spec.parts[0].id] - this.m.spec.parts[0].h / 2;
+    }
+    this.buildCallouts();
+    this.label.c = 0;
+    const lift = () => { this.label.t = 1; this.kick(); };
+    if (instant || reduce) { this.label.t = this.label.c = 1; } else setTimeout(lift, stagger * this.parts.length + 260);
+    if (instant || reduce) { this.zoom.c = this.zoom.t; this.ty.c = this.ty.t; if (this.person) this.personOp.c = this.personOp.t; }
+    this.kick();
+  }
+
+  buildCallouts() {
+    const notes = this.m.notes;
+    this.svg.innerHTML = notes.map((n, i) =>
+      `<g data-on="${n.on}"><polyline class="ld"/><circle class="an" r="2.2"/><circle class="bl" r="11"/><text class="bn">${i + 1}</text></g>`).join('');
+    this.cg = [...this.svg.children];
+    this.hotChanged();
+  }
+
+  hotChanged() {
+    const id = this.m.hot;
+    this.parts.forEach(P => { const on = P.p.id === id; P.lift.t = on ? 6 : 0; P.heat.t = on ? 1 : 0; });
+    (this.cg || []).forEach(g => g.classList.toggle('hot', g.dataset.on === id));
+    this.kick();
+  }
+
+  recolor() {
+    this.col = palette();
+    this.parts.forEach(P => {
+      P.mats.forEach((mt, i) => mt.color.copy(i < 2 ? this.col.s1 : i < 4 ? this.col.face : this.col.s2));
+      P.detMat.color.copy(this.col.muted);
+    });
+    if (this.personMat) this.personMat.color.copy(this.col.ink);
+    this.kick();
+  }
+
+  bindPointer() {
+    const c = this.stage;
+    let drag = null;
+    c.addEventListener('pointerdown', e => { drag = { x: e.clientX, yaw: this.yaw.c, moved: false }; });
+    addEventListener('pointerup', () => { drag = null; });
+    c.addEventListener('pointermove', e => {
+      const r = c.getBoundingClientRect();
+      if (drag) {
+        const dx = e.clientX - drag.x;
+        if (Math.abs(dx) > 3) drag.moved = true;
+        this.yaw.t = this.yaw.c = Math.max(-.75, Math.min(.75, drag.yaw + dx * .008));
+        this.kick(); return;
+      }
+      if (e.pointerType !== 'mouse') return;
+      this.ptr.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+      this.ray.setFromCamera(this.ptr, this.cam);
+      const hits = this.ray.intersectObjects(this.parts.filter(P => P.op.c > .5).map(P => P.mesh));
+      const id = hits.length ? hits[0].object.userData.id : null;
+      if (id !== this.m.hot) setHot(this.m, id);
+    });
+    c.addEventListener('pointerleave', () => { if (this.m.hot) setHot(this.m, null); });
+  }
+
+  resize() {
+    const W = this.stage.clientWidth, H = this.stage.clientHeight;
+    if (!W || !H) return;
+    this.W = W; this.H = H;
+    this.renderer.setSize(W, H, false);
+    const S = this.m.spec.view * (W < 520 ? 1.08 : 1), a = W / H, L = W < 520 ? .46 : .42;
+    Object.assign(this.cam, { left: -S * a * L, right: S * a * (1 - L), top: S / 2, bottom: -S / 2 });
+    this.cam.updateProjectionMatrix();
+    this.kick();
+  }
+
+  kick() { if (!this.raf) { this.last = performance.now(); this.raf = requestAnimationFrame(t => this.tick(t)); } }
+
+  tick(t) {
+    this.raf = 0;
+    const dt = Math.min(64, t - this.last); this.last = t;
+    const k = reduce ? 1 : 1 - Math.exp(-dt / TAU);
+    let moving = false;
+    for (const o of this.vars) {
+      const d = o.t - o.c;
+      if (Math.abs(d) > .002) { o.c += d * k; moving = true; } else o.c = o.t;
+    }
+    // apply
+    this.rig.rotation.y = this.yaw.c;
+    this.parts.forEach(P => {
+      P.g.position.y = P.y.c + P.lift.c;
+      P.g.visible = P.op.c > .01;
+      P.mats.forEach(mt => mt.opacity = P.op.c);
+      P.edgeMat.opacity = Math.max(P.op.c, 0);
+      P.detMat.opacity = P.op.c * .9;
+      P.edgeMat.color.copy(this.col.ink).lerp(this.col.accent, P.heat.c);
+    });
+    if (this.person) { this.personMat.opacity = this.personOp.c; this.person.visible = this.personOp.c > .01; }
+    const D = 900, ty = this.ty.c;
+    this.cam.position.set(D, ty + D * .82, D);
+    this.cam.lookAt(0, ty, 0);
+    this.cam.zoom = this.zoom.c; this.cam.updateProjectionMatrix();
+    this.renderer.render(this.scene, this.cam);
+    this.drawCallouts();
+    if (moving) this.raf = requestAnimationFrame(t2 => this.tick(t2));
+  }
+
+  project(v3) {
+    v3.project(this.cam);
+    return { x: (v3.x + 1) / 2 * this.W, y: (1 - v3.y) / 2 * this.H };
+  }
+
+  anchor(on) {
+    if (on === 'person') {
+      const v = new T.Vector3(9, 46, 0); this.person.localToWorld(v);
+      return { ...this.project(v), op: this.personOp.c };
+    }
+    const P = this.byId[on]; if (!P) return null;
+    const { w, d, h } = P.p; let best = null;
+    for (const [x, z] of [[w / 2, d / 2], [w / 2, -d / 2], [-w / 2, d / 2], [-w / 2, -d / 2]]) {
+      const v = new T.Vector3(x * .82, h / 2, z * .82); P.g.localToWorld(v);
+      const s = this.project(v);
+      if (!best || s.x > best.x) best = s;
+    }
+    return { ...best, op: P.op.c };
+  }
+
+  drawCallouts() {
+    if (!this.cg || !this.W) return;
+    const r = 11, bx = this.W - r - 12;
+    const items = this.m.notes.map((n, i) => ({ g: this.cg[i], ...(this.anchor(n.on) || { x: 0, y: 0, op: 0 }) }));
+    const order = items.slice().sort((a, b) => a.y - b.y);
+    order.forEach(it => it.by = Math.max(r + 6, Math.min(this.H - r - 28, it.y)));
+    for (let i = 1; i < order.length; i++) order[i].by = Math.max(order[i].by, order[i - 1].by + 2 * r + 8);
+    for (let i = order.length - 2; i >= 0; i--) order[i].by = Math.min(order[i].by, order[i + 1].by - 2 * r - 8);
+    items.forEach(it => {
+      const [ld, an, bl, bn] = it.g.children;
+      const knee = Math.min(bx - r - 16, Math.max(it.x + 14, bx - r - 60));
+      ld.setAttribute('points', `${it.x},${it.y} ${knee},${it.by} ${bx - r},${it.by}`);
+      an.setAttribute('cx', it.x); an.setAttribute('cy', it.y);
+      bl.setAttribute('cx', bx); bl.setAttribute('cy', it.by);
+      bn.setAttribute('x', bx); bn.setAttribute('y', it.by);
+      it.g.style.opacity = (this.label.c * Math.min(1, it.op * 1.2)).toFixed(3);
+    });
+  }
+}
+
+if (!T) machines.forEach(m => m.root.classList.add('no3d'));
+else machines.forEach(m => { try { m.gl = new Drawing(m); } catch (e) { console.error(e); m.root.classList.add("no3d"); } });
+</script>
