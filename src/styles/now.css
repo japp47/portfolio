@@ -1,0 +1,55 @@
+/* Now: the day job, two cards side by side. */
+
+.jobs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px; /* the 1px gap shows the line colour between the cards */
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.job {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: clamp(24px, 3.4vw, 48px);
+  background: var(--bg);
+  transition: background 0.5s var(--ease);
+}
+
+.job:hover {
+  background: var(--bg-2);
+}
+
+.job p {
+  margin: 0;
+}
+
+.job__text {
+  max-width: 46ch;
+  color: var(--muted);
+}
+
+.job h3 {
+  margin: 4px 0 0;
+  font: 400 clamp(26px, 2.6vw, 38px) / 1.1 var(--sans);
+  letter-spacing: -0.04em;
+}
+
+.job__fig {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 24px !important;
+}
+
+.num {
+  font: 300 clamp(44px, 5.4vw, 80px) / 1 var(--sans);
+  letter-spacing: -0.05em;
+}
+
+@media (max-width: 860px) {
+  .jobs {
+    grid-template-columns: 1fr;
+  }
+}

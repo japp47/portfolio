@@ -1,0 +1,23 @@
+/*
+ * Dark and monochrome: one near-black ground, one warm off-white ink, greys between.
+ * Geist for text, Geist Mono for labels, Instrument Serif italic for the soft words.
+ */
+:root {
+  --bg: #0a0a0a;
+  --bg-2: #111111;
+  --fg: #ededea;
+  --muted: #8b8b87;
+  --dim: #55554f;
+  --line: rgba(237, 237, 234, 0.1);
+
+  --sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --serif: 'Instrument Serif', Georgia, serif;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --pad: clamp(20px, 4vw, 56px);
+
+  color-scheme: dark;
+}
+
+/* Phones and small tablets: every file uses @media (max-width: 860px) for its phone rules. */

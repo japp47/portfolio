@@ -1,0 +1,38 @@
+/* The shared frame of every section below the hero: label on the left, heading on the right. */
+
+.block {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(96px, 14vw, 180px) var(--pad) 0;
+}
+
+.block__head {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 3fr;
+  gap: 24px;
+  align-items: baseline;
+  margin-bottom: clamp(40px, 6vw, 72px);
+}
+
+.block__head p {
+  margin: 0;
+}
+
+h2 {
+  margin: 0;
+  max-width: 18ch;
+  font: 400 clamp(32px, 4.6vw, 68px) / 1.02 var(--sans);
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+h2 em {
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .block__head {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

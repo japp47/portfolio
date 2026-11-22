@@ -1,0 +1,16 @@
+/*
+ * Styles, in cascade order. Each file owns one part of the page and keeps its own
+ * phone rules at the bottom. Shared values live in tokens.css.
+ */
+@import './tokens.css';
+@import './base.css';
+@import './effects.css';
+@import './header.css';
+@import './hero.css';
+@import './sections.css';
+@import './work.css';
+@import './now.css';
+@import './about.css';
+@import './contact.css';
+@import './terminal.css';
+@import './motion.css';

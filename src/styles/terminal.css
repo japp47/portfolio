@@ -1,0 +1,243 @@
+/* The terminal (features/terminal): a floating button and a panel that slides up. */
+
+/* --- the button in the bottom-right corner ------------------------------------------ */
+
+.term-toggle {
+  position: fixed;
+  right: max(var(--pad), env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 10px 14px;
+  font: 500 13px/1 var(--mono);
+  color: var(--fg);
+  background: rgba(17, 17, 17, 0.8);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition:
+    transform 0.4s var(--ease),
+    background 0.4s,
+    color 0.4s,
+    opacity 0.4s;
+}
+
+.term-toggle:hover {
+  background: var(--fg);
+  color: var(--bg);
+  transform: translateY(-2px);
+}
+
+.term-toggle:hover kbd {
+  color: var(--bg);
+  border-color: rgba(10, 10, 10, 0.25);
+}
+
+/* dodge.ts sets --lift when a row of links is under the button */
+.term-toggle.is-lifted {
+  transform: translateY(calc(-1 * var(--lift)));
+}
+
+.term-toggle.is-lifted:hover {
+  transform: translateY(calc(-2px - var(--lift)));
+}
+
+/* it appears after the intro and hides while the panel is open */
+.js .term-toggle {
+  opacity: 0;
+}
+
+.js.is-ready .term-toggle {
+  opacity: 1;
+  transition-delay: 1.2s;
+}
+
+.js.is-ready body.term-on .term-toggle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- the panel ---------------------------------------------------------------------- */
+
+.term {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 40;
+  width: min(880px, calc(100% - 32px));
+  height: min(64vh, 560px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  font: 400 13px/1.6 var(--mono);
+  color: var(--fg);
+  background: rgba(13, 13, 13, 0.94);
+  border: 1px solid rgba(237, 237, 234, 0.14);
+  border-radius: 14px;
+  box-shadow:
+    0 40px 120px -20px rgba(0, 0, 0, 0.9),
+    0 0 0 1px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  transform: translate(-50%, calc(100% + 40px));
+  transition:
+    transform 0.55s var(--ease),
+    opacity 0.4s var(--ease);
+}
+
+.term.is-open {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.term[hidden] {
+  display: none;
+}
+
+.term__bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.term__dots {
+  display: flex;
+  gap: 7px;
+}
+
+.term__dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #2c2c2a;
+}
+
+.term__title {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.term__close {
+  padding: 4px 7px;
+  font: 500 11px/1 var(--mono);
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.term__close:hover {
+  color: var(--fg);
+  border-color: var(--muted);
+}
+
+.term__out {
+  padding: 16px 18px 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #2c2c2a transparent;
+}
+
+.term__in {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px 16px;
+}
+
+.term__in input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: var(--fg);
+  caret-color: var(--fg);
+  background: none;
+  border: 0;
+  outline: none;
+}
+
+/* --- output lines (built in terminal/format.ts) --------------------------------------- */
+
+.t-block {
+  margin-bottom: 10px;
+}
+
+.t-line {
+  min-height: 1.6em;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.t-prompt {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.t-dim {
+  color: var(--dim);
+}
+
+.t-hi {
+  color: #fff;
+  font-weight: 500;
+}
+
+.t-cmd,
+.t-link {
+  text-decoration: underline;
+  text-decoration-color: var(--dim);
+  text-underline-offset: 3px;
+}
+
+.t-cmd {
+  padding: 0;
+  font: inherit;
+  color: var(--fg);
+  white-space: pre;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.t-cmd:hover,
+.t-link:hover {
+  text-decoration-color: var(--fg);
+}
+
+@media (max-width: 860px) {
+  .term {
+    width: calc(100% - 16px);
+    height: min(72svh, 600px);
+    bottom: max(8px, env(safe-area-inset-bottom));
+    font-size: 12px;
+    background: #0d0d0d;
+  }
+
+  .term__title {
+    text-align: left;
+  }
+
+  .term__out {
+    padding: 14px 14px 4px;
+  }
+
+  .term__in {
+    padding: 10px 14px 14px;
+  }
+
+  /* 16px stops iOS from zooming into the input */
+  .term__in input {
+    font-size: 16px;
+  }
+}

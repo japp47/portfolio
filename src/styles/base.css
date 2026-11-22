@@ -1,0 +1,139 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 16px/1.6 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+kbd {
+  font: 500 11px/1 var(--mono);
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+}
+
+::selection {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+:focus-visible {
+  outline: 1px solid var(--fg);
+  outline-offset: 4px;
+}
+
+/* --- utilities ---------------------------------------------------------------------- */
+
+.mono {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* an inline underlined link */
+.u {
+  text-decoration: underline;
+  text-decoration-color: var(--dim);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.3s;
+}
+
+.u:hover {
+  text-decoration-color: var(--fg);
+}
+
+/* a row of small mono links (hero foot, footer) */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  justify-content: flex-end;
+}
+
+.links a {
+  display: inline-block;
+  transition: color 0.3s;
+}
+
+.links a:hover {
+  color: var(--muted);
+}
+
+/* the rounded outline button (open the terminal, get the resume) */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  font: 400 15px/1 var(--sans);
+  color: var(--fg);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background 0.4s var(--ease),
+    color 0.4s var(--ease),
+    border-color 0.4s;
+}
+
+.pill:hover {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+}
+
+.pill__icon {
+  color: var(--muted);
+}
+
+.pill:hover .pill__icon,
+.pill:hover kbd {
+  color: var(--bg);
+  border-color: rgba(10, 10, 10, 0.25);
+}
+
+@media (max-width: 860px) {
+  .links {
+    justify-content: flex-start;
+  }
+}

@@ -1,0 +1,46 @@
+/* Contact: a huge "say hi", one line, and the footer row. */
+
+.contact {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(120px, 18vw, 240px) var(--pad) calc(28px + env(safe-area-inset-bottom));
+}
+
+.contact > p:first-child {
+  margin: 0 0 12px;
+}
+
+.contact h2 {
+  max-width: none;
+  font-size: clamp(88px, 21vw, 330px);
+  line-height: 0.85;
+  letter-spacing: -0.07em;
+}
+
+.big-link {
+  display: inline-block;
+  transition:
+    color 0.4s var(--ease),
+    letter-spacing 0.6s var(--ease);
+}
+
+.big-link:hover {
+  color: var(--muted);
+  letter-spacing: -0.05em;
+}
+
+.contact__line {
+  margin: 48px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.contact__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: clamp(80px, 12vw, 160px);
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}

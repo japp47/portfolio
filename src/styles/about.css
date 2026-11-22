@@ -1,0 +1,145 @@
+/* About: "jsc" in binary on the left; story, numbers and what I'm on now on the right. */
+
+.about {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(32px, 5vw, 80px);
+  align-items: start;
+}
+
+.about__art {
+  position: sticky;
+  top: 120px;
+}
+
+.about__art-note {
+  margin: 16px 0 0;
+}
+
+/* the binary art (features/binary-art): faint digits, bright ones inside the letters */
+.binary {
+  margin: 0;
+  font: 400 9px/1.15 var(--mono);
+  letter-spacing: 0.1em;
+  color: #1d1d1b;
+  white-space: pre;
+  overflow: hidden;
+  user-select: none;
+  cursor: crosshair;
+}
+
+.binary span {
+  transition: color 0.6s var(--ease);
+}
+
+.binary .b-on {
+  color: var(--fg);
+}
+
+.binary .b-lit {
+  color: #b8b8b3;
+  transition-duration: 0.05s;
+}
+
+.binary .b-on.b-lit {
+  color: #fff;
+}
+
+.about__lede {
+  margin: 0;
+  font: 300 clamp(22px, 2.3vw, 34px) / 1.35 var(--sans);
+  letter-spacing: -0.025em;
+}
+
+.about__text {
+  margin: 28px 0 0;
+  max-width: 54ch;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+/* four numbers in a row */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  margin: 56px 0 0;
+  padding: 28px 0;
+  border-block: 1px solid var(--line);
+}
+
+.stats div {
+  display: grid;
+  gap: 6px;
+}
+
+.stats dd {
+  margin: 0;
+  font: 300 clamp(30px, 3.4vw, 50px) / 1 var(--sans);
+  letter-spacing: -0.05em;
+}
+
+.stat-link {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  transition: color 0.3s;
+}
+
+.stat-link span {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stat-link:hover {
+  color: var(--muted);
+}
+
+/* "currently" list: label, then value */
+.now {
+  list-style: none;
+  margin: 32px 0 0;
+  padding: 0;
+  font-size: 13px;
+  text-transform: none;
+}
+
+.now li {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.about__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 36px;
+}
+
+@media (max-width: 860px) {
+  .about {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .about__art {
+    position: static;
+  }
+
+  .binary {
+    font-size: 7px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 28px;
+  }
+
+  .now li {
+    grid-template-columns: 90px 1fr;
+  }
+}

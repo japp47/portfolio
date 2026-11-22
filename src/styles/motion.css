@@ -1,0 +1,19 @@
+/* Reduced motion: no animation anywhere, and nothing waits hidden for an entrance. */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .js :is(.line__in, [data-reveal], .hero__hi, .hero__role, .hero__lede, .hero__foot, .term-toggle) {
+    opacity: 1;
+    transform: none;
+  }
+}

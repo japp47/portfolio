@@ -1,0 +1,141 @@
+/* Work: an index of projects. Each row is one link that fills with ink on hover. */
+
+.index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.row a {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1.1fr) minmax(0, 1.6fr) minmax(0, 0.9fr) 56px;
+  gap: 24px;
+  align-items: baseline;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--line);
+  overflow: hidden;
+}
+
+/* the ink that rises behind the row on hover */
+.row a::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--fg);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.6s var(--ease);
+}
+
+.row a > * {
+  position: relative;
+  z-index: 1;
+  transition:
+    color 0.4s var(--ease),
+    transform 0.6s var(--ease);
+}
+
+.row__n,
+.row__tags,
+.row__year {
+  color: var(--muted);
+}
+
+.row__year {
+  text-align: right;
+}
+
+.row__name {
+  font: 400 clamp(22px, 2.4vw, 34px) / 1.1 var(--sans);
+  letter-spacing: -0.035em;
+}
+
+.row__what {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* "● live" next to a project that is in production */
+.row__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  padding: 3px 8px;
+  vertical-align: middle;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.row__live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+.row__url {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--fg);
+  text-decoration: underline;
+  text-decoration-color: var(--dim);
+  text-underline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .row a:hover::before {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+
+  .row a:hover > *,
+  .row a:hover :is(.row__live, .row__url) {
+    color: var(--bg);
+  }
+
+  .row a:hover .row__live {
+    border-color: rgba(10, 10, 10, 0.2);
+  }
+
+  .row a:hover .row__name {
+    transform: translateX(12px);
+  }
+}
+
+.more {
+  display: inline-block;
+  margin-top: 28px;
+  color: var(--muted);
+  transition: color 0.3s;
+}
+
+.more:hover {
+  color: var(--fg);
+}
+
+@media (max-width: 860px) {
+  .row a {
+    grid-template-columns: 32px 1fr auto;
+    gap: 6px 14px;
+    padding: 22px 0;
+  }
+
+  .row__what,
+  .row__tags {
+    grid-column: 2 / -1;
+  }
+
+  .row__year {
+    grid-row: 1;
+    grid-column: 3;
+  }
+}
