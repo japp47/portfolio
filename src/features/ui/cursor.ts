@@ -19,7 +19,10 @@ export function mountCursor(): void {
     x = e.clientX;
     y = e.clientY;
     dot.style.transform = `translate(${x}px, ${y}px)`;
-    cursor.classList.toggle('is-link', Boolean((e.target as Element).closest('a, button')));
+    // the filled ring would blot out the terminal's traffic lights, whose colour is the point
+    const target = e.target as Element;
+    const overControl = Boolean(target.closest('a, button')) && !target.closest('[data-light]');
+    cursor.classList.toggle('is-link', overControl);
     cursor.classList.remove('is-hidden');
   });
   document.addEventListener('pointerleave', () => cursor.classList.add('is-hidden'));

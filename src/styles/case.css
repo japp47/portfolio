@@ -1,0 +1,11 @@
+/*
+ * Styles for a case-study page, in cascade order. It shares everything above
+ * case-study.css with the landing page.
+ */
+@import './tokens.css';
+@import './base.css';
+@import './effects.css';
+@import './header.css';
+@import './terminal.css';
+@import './case-study.css';
+@import './motion.css';

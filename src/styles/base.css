@@ -6,6 +6,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* the header is fixed, so an anchor jump must stop short of it or it covers the heading */
+  scroll-padding-top: var(--bar-h);
 }
 
 body {

@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>99ile — Jappreet Singh Chhabra</title>
+    <meta
+      name="description"
+      content="A free CAT coach that works offline: a Go API over PostgreSQL 17 serving account-free device sync, and the race condition that made a device skip a record for good."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href="https://jappreet.netlify.app/work/99ile/" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Jappreet Singh Chhabra" />
+    <meta property="og:url" content="https://jappreet.netlify.app/work/99ile/" />
+    <meta property="og:title" content="99ile: sync that never skips a record" />
+    <meta
+      property="og:description"
+      content="A free CAT coach that works offline. How a Postgres sequence can lose a row for good, and the one line that fixes it."
+    />
+    <meta property="og:image" content="https://jappreet.netlify.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://jappreet.netlify.app/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/#now" data-magnetic>now</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+        <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="case" id="top">
+      <!-- ============ HERO ============
+           The three figures are the anchor: they say in one glance why the page is worth reading. -->
+      <header class="case__hero">
+        <div class="case__top mono">
+          <a class="case__back" href="/#work" data-magnetic>← all work</a>
+          <span class="links">
+            <a href="https://99ile.in" target="_blank" rel="noopener" data-magnetic>99ile.in ↗</a>
+            <a href="https://github.com/japp47/CAT-Prep" target="_blank" rel="noopener" data-magnetic
+              >github ↗</a
+            >
+          </span>
+        </div>
+
+        <p class="case__eyebrow mono">case study · 2026 · built and run solo</p>
+        <h1>99ile</h1>
+        <p class="case__tag">
+          A free CAT coach that works offline — and <em>sync that never skips a record.</em>
+        </p>
+
+        <dl class="figures">
+          <div>
+            <dt>35×</dt>
+            <dd>faster push<span class="mono">1,103 ms → 31 ms</span></dd>
+          </div>
+          <div>
+            <dt>10.7 M</dt>
+            <dd>records load-tested<span class="mono">5.5 GB · 10,000 students</span></dd>
+          </div>
+          <div>
+            <dt>20×</dt>
+            <dd>headroom at peak<span class="mono">250 sessions a second</span></dd>
+          </div>
+        </dl>
+
+        <p class="case__stack mono">
+          <span class="muted">stack</span> Go 1.27 · PostgreSQL 17 · React 19 · Cloudflare · Render · Supabase
+        </p>
+      </header>
+
+      <!-- ============ 01 / WHAT ============ -->
+      <section id="what" aria-labelledby="what-h">
+        <p class="mono muted">01 / what it is</p>
+        <h2 id="what-h">Practice that never waits for a server.</h2>
+
+        <p class="lede">
+          99ile helps students prepare for CAT, India's entrance exam for the IIMs. It plans each day around
+          the time the student actually has, explains why every wrong option was tempting, and keeps bringing
+          their own mistakes back until they stop happening.
+        </p>
+        <p>
+          The interesting part for an engineer is the constraint I set on day one:
+          <strong>everything works as a guest, offline, on one device.</strong> Sync, sign-in and AI are
+          additions, never a gate in front of practice. That single rule decided the architecture — practice
+          content ships with the site instead of living in the database, the browser owns the state, and the
+          server's only real job is to order writes so that two of a student's devices agree.
+        </p>
+        <p>VARC and DILR are live. Quant lands January 2027. Every service runs on a free plan.</p>
+
+        <ol class="rules">
+          <li data-reveal>
+            <b>No sign-up to start.</b>
+            <span>Everything works as a guest, offline, on one device.</span>
+          </li>
+          <li data-reveal>
+            <b>Code counts, AI explains.</b>
+            <span>
+              Scores, schedules and answer checks come from tested code. AI is used only where the answer
+              differs per student, and practice never waits for it.
+            </span>
+          </li>
+          <li data-reveal>
+            <b>Original content, checked by tests.</b>
+            <span>Every answer key is tested before it ships. DILR answers are computed by a solver.</span>
+          </li>
+          <li data-reveal>
+            <b>Fast on a cheap phone on 4G.</b>
+            <span
+              >The first download has a budget — 155 KB gzipped — and CI fails the build if it is
+              exceeded.</span
+            >
+          </li>
+          <li data-reveal>
+            <b>Free to run.</b>
+            <span>Every service is on a free plan.</span>
+          </li>
+        </ol>
+      </section>
+
+      <!-- ============ 02 / ARCHITECTURE ============ -->
+      <section id="architecture" aria-labelledby="arch-h">
+        <p class="mono muted">02 / architecture</p>
+        <h2 id="arch-h">The browser owns the state. The server orders the writes.</h2>
+
+        <p>
+          The browser only ever talks to its own origin: a Cloudflare Pages function forwards
+          <code>/api/v1/*</code> to the Go API with a shared secret. So there is no CORS, the device cookie
+          stays first-party, and the API refuses anything that did not come through the proxy. Point at a box
+          to follow what it touches.
+        </p>
+
+        <figure class="fig fig--live">
+          <div class="fig__frame">
+            <svg
+              viewBox="0 0 1000 660"
+              role="img"
+              aria-label="Architecture: the device talks to Cloudflare Pages, which proxies to a Go API on Render, which talks to PostgreSQL and Groq."
+            >
+              <!-- group boxes -->
+              <rect class="dg-group" x="36" y="58" width="852" height="108" />
+              <text class="dg-lane" x="40" y="48">on the device</text>
+              <rect class="dg-group" x="36" y="236" width="852" height="108" />
+              <text class="dg-lane" x="40" y="226">cloudflare pages</text>
+              <rect class="dg-group" x="36" y="414" width="752" height="108" />
+              <text class="dg-lane" x="40" y="404">render · singapore</text>
+
+              <!-- edges -->
+              <g class="dg-edge" data-link="pwa static">
+                <path d="M210,138 V256" />
+                <path d="M204,248 L210,258 L216,248" />
+              </g>
+              <g class="dg-edge" data-link="ext static">
+                <path d="M710,138 V200 H330 V256" />
+                <path d="M324,248 L330,258 L336,248" />
+              </g>
+              <g class="dg-edge" data-link="pwa proxy">
+                <path d="M290,138 V180 H660 V256" />
+                <path d="M654,248 L660,258 L666,248" />
+                <text class="dg-label" x="470" y="172" text-anchor="middle">/api/v1/*</text>
+              </g>
+              <g class="dg-edge" data-link="proxy api">
+                <path d="M690,316 V380 H570 V434" />
+                <path d="M564,426 L570,436 L576,426" />
+                <text class="dg-label" x="624" y="372" text-anchor="middle">+ X-Proxy-Secret</text>
+              </g>
+              <g class="dg-edge" data-link="api groq">
+                <path d="M740,468 H802" />
+                <path d="M794,462 L804,468 L794,474" />
+              </g>
+              <g class="dg-edge" data-link="api pg">
+                <path d="M500,494 V572" />
+                <path d="M494,564 L500,574 L506,564" />
+              </g>
+              <g class="dg-edge" data-link="worker pg">
+                <path d="M330,494 V572" />
+                <path d="M324,564 L330,574 L336,564" />
+              </g>
+
+              <!-- nodes -->
+              <g class="dg-node" data-node="pwa" tabindex="0">
+                <rect class="dg-box" x="60" y="86" width="300" height="52" />
+                <text class="dg-head" x="78" y="110">React 19 PWA</text>
+                <text class="dg-sub" x="78" y="128">localStorage holds all state</text>
+              </g>
+              <g class="dg-node" data-node="ext" tabindex="0">
+                <rect class="dg-box" x="560" y="86" width="300" height="52" />
+                <text class="dg-head" x="578" y="110">Chrome extension</text>
+                <text class="dg-sub" x="578" y="128">side panel is 99ile.in/panel</text>
+              </g>
+              <g class="dg-node" data-node="static" tabindex="0">
+                <rect class="dg-box" x="60" y="264" width="380" height="52" />
+                <text class="dg-head" x="78" y="288">Static site + content JSON</text>
+                <text class="dg-sub" x="78" y="306">one file at a time · works offline</text>
+              </g>
+              <g class="dg-node" data-node="proxy" tabindex="0">
+                <rect class="dg-box" x="520" y="264" width="340" height="52" />
+                <text class="dg-head" x="538" y="288">Same-origin proxy</text>
+                <text class="dg-sub" x="538" y="306">functions/api · no CORS, first-party cookie</text>
+              </g>
+              <g class="dg-node" data-node="worker" tabindex="0">
+                <rect class="dg-box" x="60" y="442" width="300" height="52" />
+                <text class="dg-head" x="78" y="466">Reminder worker</text>
+                <text class="dg-sub" x="78" y="484">in-process · every 2 min</text>
+              </g>
+              <g class="dg-node" data-node="api" tabindex="0">
+                <rect class="dg-box" x="400" y="442" width="340" height="52" />
+                <text class="dg-head" x="418" y="466">Go API</text>
+                <text class="dg-sub" x="418" y="484">net/http · 5 deps · 20 MB distroless</text>
+              </g>
+              <g class="dg-node" data-node="groq" tabindex="0">
+                <rect class="dg-box" x="810" y="442" width="160" height="52" />
+                <text class="dg-head" x="828" y="466">Groq</text>
+                <text class="dg-sub" x="828" y="484">gpt-oss 120b / 20b</text>
+              </g>
+              <g class="dg-node" data-node="pg" tabindex="0">
+                <rect class="dg-box" x="230" y="580" width="420" height="52" />
+                <text class="dg-head" x="248" y="604">PostgreSQL 17 · Supabase</text>
+                <text class="dg-sub" x="248" y="622">8 schemas · 32 tables · no ORM</text>
+              </g>
+            </svg>
+          </div>
+          <p class="fig__note mono muted">
+            The site keeps working with the API down: the proxy answers a graceful 503 and practice content is
+            already on the device.
+          </p>
+        </figure>
+      </section>
+
+      <!-- ============ 03 / DATA MODEL ============ -->
+      <section id="data" aria-labelledby="data-h">
+        <p class="mono muted">03 / data model</p>
+        <h2 id="data-h">Four tables carry the sync.</h2>
+
+        <p>
+          Postgres 17, no ORM, goose migrations embedded in the binary. One schema per area and never
+          <code>public</code>; two roles, where the API's role cannot run DDL and the read-only role is denied
+          every secret hash and the record payloads. A migration may only add, because the old server keeps
+          serving while the new schema rolls out.
+        </p>
+
+        <figure class="fig fig--live">
+          <div class="fig__frame">
+            <svg
+              viewBox="0 0 1040 640"
+              role="img"
+              aria-label="Entity relationship diagram: identities has many devices, one head row, and many records; devices last wrote records."
+            >
+              <g class="dg-edge" data-link="identities heads">
+                <path d="M380,83 H170 V248" />
+                <path d="M164,240 L170,250 L176,240" />
+                <text class="dg-label" x="212" y="74">1 — 1</text>
+              </g>
+              <g class="dg-edge" data-link="identities devices">
+                <path d="M640,83 H870 V248" />
+                <path d="M864,240 L870,250 L876,240" />
+                <text class="dg-label" x="792" y="74">1 — N</text>
+              </g>
+              <g class="dg-edge" data-link="identities records">
+                <path d="M510,136 V438" />
+                <path d="M504,430 L510,440 L516,430" />
+                <text class="dg-label" x="522" y="300">1 — N</text>
+              </g>
+              <g class="dg-edge" data-link="devices records">
+                <path d="M870,376 V500 H690" />
+                <path d="M698,494 L688,500 L698,506" />
+                <text class="dg-label" x="782" y="490" text-anchor="middle">last wrote</text>
+              </g>
+
+              <!-- account.identities -->
+              <g class="dg-node" data-node="identities" tabindex="0">
+                <rect class="dg-box" x="380" y="30" width="260" height="106" />
+                <rect class="er-head-row" x="381" y="31" width="258" height="25" />
+                <line class="er-rule" x1="380" y1="56" x2="640" y2="56" />
+                <text class="er-name" x="394" y="48">account.identities</text>
+                <text class="er-col" x="394" y="70">
+                  <tspan class="er-key">PK</tspan>
+                  id · uuid v7
+                </text>
+                <text class="er-col" x="394" y="90">status · active | suspended</text>
+                <text class="er-col" x="394" y="110">created_at</text>
+                <text class="er-col" x="394" y="130">last_seen_at</text>
+              </g>
+
+              <!-- sync.heads -->
+              <g class="dg-node" data-node="heads" tabindex="0">
+                <rect class="dg-box" x="40" y="250" width="260" height="106" />
+                <rect class="er-head-row" x="41" y="251" width="258" height="25" />
+                <line class="er-rule" x1="40" y1="276" x2="300" y2="276" />
+                <text class="er-name" x="54" y="268">sync.heads</text>
+                <text class="er-col" x="54" y="290">
+                  <tspan class="er-key">PK</tspan>
+                  identity_id
+                </text>
+                <text class="er-col" x="54" y="310">rev · highest given out</text>
+                <text class="er-col" x="54" y="330">record_count · max 20,000</text>
+                <text class="er-col" x="54" y="350">data_bytes · max 8 MB</text>
+              </g>
+
+              <!-- account.devices -->
+              <g class="dg-node" data-node="devices" tabindex="0">
+                <rect class="dg-box" x="740" y="250" width="260" height="126" />
+                <rect class="er-head-row" x="741" y="251" width="258" height="25" />
+                <line class="er-rule" x1="740" y1="276" x2="1000" y2="276" />
+                <text class="er-name" x="754" y="268">account.devices</text>
+                <text class="er-col" x="754" y="290">
+                  <tspan class="er-key">PK</tspan>
+                  id
+                </text>
+                <text class="er-col" x="754" y="310">
+                  <tspan class="er-key">FK</tspan>
+                  identity_id
+                </text>
+                <text class="er-col" x="754" y="330">
+                  <tspan class="er-key">UK</tspan>
+                  secret_hash · sha-256
+                </text>
+                <text class="er-col" x="754" y="350">platform</text>
+                <text class="er-col" x="754" y="370">revoked_at</text>
+              </g>
+
+              <!-- sync.records -->
+              <g class="dg-node" data-node="records" tabindex="0">
+                <rect class="dg-box" x="380" y="440" width="310" height="166" />
+                <rect class="er-head-row" x="381" y="441" width="308" height="25" />
+                <line class="er-rule" x1="380" y1="466" x2="690" y2="466" />
+                <text class="er-name" x="394" y="458">sync.records</text>
+                <text class="er-col" x="394" y="480">
+                  <tspan class="er-key">PK</tspan>
+                  identity_id
+                </text>
+                <text class="er-col" x="394" y="500">
+                  <tspan class="er-key">PK</tspan>
+                  kind · 22 of them
+                </text>
+                <text class="er-col" x="394" y="520">
+                  <tspan class="er-key">PK</tspan>
+                  rec_id · the browser's id
+                </text>
+                <text class="er-col" x="394" y="540">data · jsonb, null = deleted</text>
+                <text class="er-col" x="394" y="560">rev · compare-and-set</text>
+                <text class="er-col" x="394" y="580">stamp · hybrid clock, tiebreak</text>
+                <text class="er-col" x="394" y="600">
+                  <tspan class="er-key">FK</tspan>
+                  device_id
+                </text>
+              </g>
+            </svg>
+          </div>
+          <p class="fig__note mono muted">
+            A unique index on (identity_id, rev) serves the only query a pull makes: where rev &gt; cursor
+            order by rev limit 500.
+          </p>
+        </figure>
+
+        <p>
+          Four more schemas sit beside these: <code>audit</code> (append-only, IPs stored as an HMAC with a
+          yearly key so they cannot be tracked across years), <code>access</code> (roles and grants, hung off
+          the account table rather than the device table so a stolen cookie can never be an admin),
+          <code>notify</code> (the reminder queue, claimed with <code>SKIP LOCKED</code> — no Redis, no
+          broker) and <code>ai</code>.
+        </p>
+      </section>
+
+      <!-- ============ 04 / THE RACE ============ -->
+      <section id="race" aria-labelledby="race-h">
+        <p class="mono muted">04 / the bug that mattered</p>
+        <h2 id="race-h">A sequence hands out numbers before the transaction commits.</h2>
+
+        <p class="lede">
+          The sync cursor is a server-assigned revision number, not a timestamp — phone clocks are wrong,
+          sequences are not. But a Postgres sequence gives out a number the moment it is asked, not when the
+          work commits. Two of a student's devices pushing at once can therefore commit out of order, and a
+          third device can step over a row forever.
+        </p>
+
+        <div class="fig" data-swap>
+          <div class="swap" role="group" aria-label="Show the race or the fix">
+            <button type="button" data-show="before" aria-pressed="true">before</button>
+            <button type="button" data-show="after" aria-pressed="false">after the fix</button>
+          </div>
+
+          <div class="swap__panel" data-panel="before">
+            <div class="fig__frame">
+              <svg
+                viewBox="0 0 1000 430"
+                data-sequence
+                role="img"
+                aria-label="Before: push A takes rev 10, push B takes rev 11, B commits first, device C pulls and moves its cursor past 10, then A commits. Row 10 is never seen."
+              >
+                <!-- lanes -->
+                <g class="dg-edge dg-edge--soft">
+                  <path d="M130,44 V410" />
+                  <path d="M360,44 V410" />
+                  <path d="M620,44 V410" />
+                  <path d="M880,44 V410" />
+                </g>
+                <text class="dg-lane" x="130" y="26" text-anchor="middle">push a</text>
+                <text class="dg-lane" x="360" y="26" text-anchor="middle">push b</text>
+                <text class="dg-lane" x="620" y="26" text-anchor="middle">postgres</text>
+                <text class="dg-lane" x="880" y="26" text-anchor="middle">device c</text>
+
+                <g data-step>
+                  <text class="dg-sub" x="375" y="72" text-anchor="middle">nextval → rev 10</text>
+                  <path class="dg-edge" d="M130,84 H612" />
+                  <path class="dg-edge" d="M604,78 L614,84 L604,90" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="490" y="112" text-anchor="middle">nextval → rev 11</text>
+                  <path class="dg-edge" d="M360,124 H612" />
+                  <path class="dg-edge" d="M604,118 L614,124 L604,130" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="490" y="152" text-anchor="middle">commit · rev 11 is visible</text>
+                  <path class="dg-edge" d="M360,164 H612" />
+                  <path class="dg-edge" d="M604,158 L614,164 L604,170" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="750" y="208" text-anchor="middle">pull where rev &gt; 9</text>
+                  <path class="dg-edge" d="M880,220 H628" />
+                  <path class="dg-edge" d="M636,214 L626,220 L636,226" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="750" y="248" text-anchor="middle">row 11 only</text>
+                  <path class="dg-edge" d="M620,260 H872" />
+                  <path class="dg-edge" d="M864,254 L874,260 L864,266" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="880" y="292" text-anchor="middle">cursor moves to 11</text>
+                  <circle class="dg-edge" cx="880" cy="304" r="5" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="375" y="340" text-anchor="middle">
+                    commit · rev 10 is visible at last
+                  </text>
+                  <path class="dg-edge" d="M130,352 H612" />
+                  <path class="dg-edge" d="M604,346 L614,352 L604,358" />
+                </g>
+                <g data-step>
+                  <text class="text-bad dg-sub" x="750" y="388" text-anchor="middle">
+                    pull where rev &gt; 11 → nothing. row 10 is gone for good.
+                  </text>
+                  <path class="dg-edge step-bad" d="M880,400 H628" />
+                  <path class="dg-edge step-bad" d="M636,394 L626,400 L636,406" />
+                </g>
+              </svg>
+            </div>
+            <p class="fig__note mono muted">
+              Device C's cursor passed 10 before row 10 existed. It will never ask for it again — and nothing
+              reports an error.
+            </p>
+          </div>
+
+          <div class="swap__panel" data-panel="after" hidden>
+            <div class="fig__frame">
+              <svg
+                viewBox="0 0 1000 430"
+                data-sequence
+                role="img"
+                aria-label="After: each push locks the identity's head row first, so pushes run in turn and the revisions become visible in order."
+              >
+                <g class="dg-edge dg-edge--soft">
+                  <path d="M130,44 V410" />
+                  <path d="M360,44 V410" />
+                  <path d="M620,44 V410" />
+                  <path d="M880,44 V410" />
+                </g>
+                <text class="dg-lane" x="130" y="26" text-anchor="middle">push a</text>
+                <text class="dg-lane" x="360" y="26" text-anchor="middle">push b</text>
+                <text class="dg-lane" x="620" y="26" text-anchor="middle">postgres</text>
+                <text class="dg-lane" x="880" y="26" text-anchor="middle">device c</text>
+
+                <g data-step>
+                  <text class="text-good dg-sub" x="375" y="86" text-anchor="middle">
+                    lock sync.heads for this identity · for update
+                  </text>
+                  <path class="dg-edge step-good" d="M130,98 H612" />
+                  <path class="dg-edge step-good" d="M604,92 L614,98 L604,104" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="490" y="138" text-anchor="middle">waits for the lock</text>
+                  <path class="dg-edge dg-edge--soft" d="M360,150 H612" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="375" y="196" text-anchor="middle">rev 10 · commit · release</text>
+                  <path class="dg-edge" d="M130,208 H612" />
+                  <path class="dg-edge" d="M604,202 L614,208 L604,214" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="490" y="248" text-anchor="middle">
+                    lock acquired · rev 11 · commit
+                  </text>
+                  <path class="dg-edge" d="M360,260 H612" />
+                  <path class="dg-edge" d="M604,254 L614,260 L604,266" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="750" y="316" text-anchor="middle">pull where rev &gt; 9</text>
+                  <path class="dg-edge" d="M880,328 H628" />
+                  <path class="dg-edge" d="M636,322 L626,328 L636,334" />
+                </g>
+                <g data-step>
+                  <text class="text-good dg-sub" x="750" y="368" text-anchor="middle">
+                    rows 10 and 11, in order
+                  </text>
+                  <path class="dg-edge step-good" d="M620,380 H872" />
+                  <path class="dg-edge step-good" d="M864,374 L874,380 L864,386" />
+                </g>
+              </svg>
+            </div>
+            <p class="fig__note mono muted">
+              The lock is per identity, so two different students never wait for each other — and a pull takes
+              no lock at all.
+            </p>
+          </div>
+        </div>
+
+        <p>The fix is the first statement inside the push transaction:</p>
+
+        <pre><code>err := pgx.BeginFunc(r.Context(), s.db, <span class="k">func</span>(tx pgx.Tx) <span class="k">error</span> {
+    <span class="k">var</span> head <span class="k">struct</span>{ rev, count, bytes <span class="k">int64</span> }
+    <span class="k">if</span> err := tx.QueryRow(r.Context(),
+        <mark>`select rev, record_count, data_bytes from sync.heads
+          where identity_id = $1 for update`</mark>,
+        d.IdentityID).Scan(&amp;head.rev, &amp;head.count, &amp;head.bytes); err != <span class="k">nil</span> {
+        <span class="k">return</span> fmt.Errorf(<span class="c">"lock head: %w"</span>, err)
+    }
+    <span class="c">// …read and lock the touched rows, classify each change, write</span>
+})</code></pre>
+
+        <p>
+          The table's own comment says it in one line:
+          <em
+            >one row per identity. Every push locks it first, so one identity's pushes run in turn and a pull
+            never skips a row.</em
+          >
+        </p>
+        <p>
+          Beyond the ordering, <strong>nothing is ever overwritten blind.</strong> Every change names the
+          revision it was based on; if the stored row has moved on, the server returns it as stale with its
+          current copy and the browser merges. A change that is byte-identical to what is stored is reported
+          as applied without burning a new revision, which makes a retried push free. Rejections are per row,
+          never per push, and deletions are always allowed so a student at the record cap can still make room.
+        </p>
+        <p>
+          Proven by a 40-seed property test that drives two devices through random interleavings and asserts
+          they converge without losing an attempt, plus Go integration tests running concurrent pushes against
+          a real Postgres with <code>-race</code>.
+        </p>
+      </section>
+
+      <!-- ============ 05 / NUMBERS ============ -->
+      <section id="numbers" aria-labelledby="num-h">
+        <p class="mono muted">05 / numbers</p>
+        <h2 id="num-h">Ten thousand students, then measured.</h2>
+
+        <p>
+          A separate database seeded with 10,000 synthetic students — created the way sign-up creates them —
+          then an evening peak replayed through the real API with a 1 ms proxy lag and a single CPU. The
+          footprint came out at <strong>10.7 million records and 5.5 GB</strong>: 563 KB per student, 538
+          bytes per record. The JSON the browsers sent is only 1.7 GB; the rest is row and index overhead.
+        </p>
+
+        <div class="table-wrap" data-reveal>
+          <table>
+            <caption class="sr-only">
+              Push latency before and after moving to set-based writes
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">push latency</th>
+                <th scope="col">before</th>
+                <th scope="col">after</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>200 records, turning sync on with a long history</td>
+                <td class="was">1,103 ms</td>
+                <td class="now-val">31 ms</td>
+              </tr>
+              <tr>
+                <td>p95 at the expected peak, 12 sessions a second</td>
+                <td class="was">83 ms</td>
+                <td class="now-val">30 ms</td>
+              </tr>
+              <tr>
+                <td>p95 at 150 sessions a second</td>
+                <td class="was">6,055 ms</td>
+                <td class="now-val">24 ms</td>
+              </tr>
+              <tr>
+                <td>saturation, with a pool of five connections</td>
+                <td class="was">~150 /s</td>
+                <td class="now-val">~250 /s</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          250 sessions a second is about twenty times the expected peak for 10,000 students. The gain came
+          from replacing per-row round trips with two set-based statements using
+          <code>unnest(…) with ordinality</code> — which is also why there is no ORM.
+        </p>
+
+        <div class="table-wrap" data-reveal>
+          <table>
+            <caption class="sr-only">
+              Front-end speed pass, Lighthouse mobile
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">front end · lighthouse mobile</th>
+                <th scope="col">before</th>
+                <th scope="col">after</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>RC passage, largest contentful paint</td>
+                <td class="was">3.16 s</td>
+                <td class="now-val">2.06 s</td>
+              </tr>
+              <tr>
+                <td>RC passage, download</td>
+                <td class="was">593 KB</td>
+                <td class="now-val">297 KB</td>
+              </tr>
+              <tr>
+                <td>home, cumulative layout shift</td>
+                <td class="was">0.107</td>
+                <td class="now-val">0</td>
+              </tr>
+              <tr>
+                <td>main script, gzipped</td>
+                <td class="was">131 KB</td>
+                <td class="now-val">110 KB</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Self-hosted fonts went from 119 KB to 49 KB by dropping the optical-size axis and the italics, with
+          size-matched Arial and Georgia fallbacks so text does not shift when the real face arrives. CI fails
+          the build if the first download goes over 155 KB gzipped.
+        </p>
+      </section>
+
+      <!-- ============ 06 / FEATURES ============ -->
+      <section id="features" aria-labelledby="feat-h">
+        <p class="mono muted">06 / what it does</p>
+        <h2 id="feat-h">Built for one exam, properly.</h2>
+
+        <div class="groups">
+          <article class="group" data-reveal>
+            <h3>Practice</h3>
+            <ul>
+              <li>
+                55 reading sets across 9 genres, every wrong option carrying a note on why it tempted you
+              </li>
+              <li>80 verbal paragraphs, each yielding four question types</li>
+              <li>59 logic and data sets, answers recomputed by a solver rather than typed in</li>
+              <li>Drills, sectionals, speed tests and a replay mode</li>
+              <li>Mistakes come back until they stop happening</li>
+            </ul>
+          </article>
+          <article class="group" data-reveal>
+            <h3>Planning</h3>
+            <ul>
+              <li>A plan built around the hours the student says they have, not a fixed calendar</li>
+              <li>Today, progress, history, error log, word list, journal, week review</li>
+            </ul>
+          </article>
+          <article class="group" data-reveal>
+            <h3>Accounts and sync</h3>
+            <ul>
+              <li>
+                Three levels, in order of what you give up: a backup file, anonymous sync, a Google account
+              </li>
+              <li>Device linking by QR or an 8-character code; a 16-character recovery code</li>
+              <li>Device list, remove a device, export everything, delete everything</li>
+              <li>Sign-in uses PKCE and never creates a second session type — it repoints the device</li>
+            </ul>
+          </article>
+          <article class="group" data-reveal>
+            <h3>Reminders and AI</h3>
+            <ul>
+              <li>Study reminders by push or email, in the student's own time zone, with quiet hours</li>
+              <li>Feedback on the student's own 25-word summary, quoting their words, never rewriting</li>
+              <li>
+                The smallest edit that makes all four checks pass, with the edit distance capped in code
+              </li>
+              <li>
+                Paste any article and get a CAT-style set: one model writes, code checks, a second model
+                answers blind
+              </li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <!-- ============ 07 / DECISIONS ============ -->
+      <section id="decisions" aria-labelledby="dec-h">
+        <p class="mono muted">07 / decisions</p>
+        <h2 id="dec-h">What I chose, and what it cost.</h2>
+
+        <div class="calls">
+          <div class="call" data-reveal>
+            <h3>Server revisions, not timestamps</h3>
+            <p>
+              Device clocks are wrong, sometimes by hours. A sequence gives total order for free. The device's
+              own hybrid clock still rides on each record, but only as a merge tiebreak — never as the cursor.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>Compare-and-set, not last-write-wins</h3>
+            <p>
+              Last-write-wins is one column and no round trips, and it silently eats a student's answers when
+              two devices are open. Naming the base revision makes the conflict visible so the browser can
+              merge it, and every merge rule is commutative by construction.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>A lock per identity, not a global one</h3>
+            <p>
+              Serialising all pushes would have been simpler and would have scaled to roughly one student at a
+              time. Locking the head row scopes the contention to exactly the writes that must be ordered.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>Content in the repository, not the database</h3>
+            <p>
+              Practice content is JSON checked by tests on every change. A content fix is a pull request with
+              a test, the site works offline, and the database stays small. The cost: adding content needs a
+              deploy.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>localStorage, not IndexedDB</h3>
+            <p>
+              One string holds the whole app state. Simple, synchronous, and fine up to a few megabytes. The
+              move to IndexedDB is already specced for when a serious student's history outgrows it — the sync
+              ledger already knows which records changed.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>AI only where the answer differs per student</h3>
+            <p>
+              "Explain my mistake" was built and then deleted: its answer is the same for everyone who picks
+              that option, so it belongs in the content as a tested note, not in a live model call.
+            </p>
+          </div>
+        </div>
+
+        <p>
+          Three things were tried and reverted, which I think is worth recording: a login cache, because it
+          broke a test that matters — a student suspended in the database must be refused at once; answering
+          empty pulls from memory, because it showed no measured gain; and gzip in the API, because Cloudflare
+          already compresses.
+        </p>
+      </section>
+
+      <!-- ============ 08 / NEXT ============ -->
+      <section id="next" aria-labelledby="next-h">
+        <p class="mono muted">08 / next</p>
+        <h2 id="next-h">What I'd do next.</h2>
+        <p>
+          Quant from January to March 2027. IndexedDB instead of one localStorage string, writing only the
+          records that changed. Partition <code>sync.records</code> by hash of the identity past about 50
+          million rows. And an end-to-end browser suite — today those checks are manual, listed per branch.
+        </p>
+      </section>
+
+      <div class="case__end mono">
+        <a class="u" href="/#work" data-magnetic>← all work</a>
+        <span class="links">
+          <a href="https://99ile.in" target="_blank" rel="noopener" data-magnetic>99ile.in ↗</a>
+          <a href="https://github.com/japp47/CAT-Prep" target="_blank" rel="noopener" data-magnetic>repo ↗</a>
+          <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+        </span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/case-study.ts"></script>
+  </body>
+</html>

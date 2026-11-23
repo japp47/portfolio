@@ -12,6 +12,7 @@ import { mountTerminal } from './features/terminal';
 import { mountClock } from './features/ui/clock';
 import { mountCursor } from './features/ui/cursor';
 import { mountMagneticLinks } from './features/ui/magnetic';
+import { mountStickyBar } from './features/ui/sticky-bar';
 import { mountHoverScramble, mountReveal } from './features/ui/reveal';
 import { hasFinePointer, prefersReducedMotion } from './lib/media';
 
@@ -24,6 +25,7 @@ if (field) mountMotionHint(field);
 
 mountTerminal();
 mountClock();
+mountStickyBar();
 mountReveal();
 mountHoverScramble();
 

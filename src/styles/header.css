@@ -9,7 +9,19 @@
   align-items: center;
   padding: 22px var(--pad);
   padding-top: max(22px, env(safe-area-inset-top));
+  /* over the hero it floats, inverting against the dot field */
   mix-blend-mode: difference;
+  transition:
+    background 0.4s var(--ease),
+    border-color 0.4s var(--ease);
+  border-bottom: 1px solid transparent;
+}
+
+/* once the page scrolls, text would pass straight through it: give it a ground */
+.bar.is-stuck {
+  mix-blend-mode: normal;
+  background: var(--bg);
+  border-bottom-color: var(--line);
 }
 
 .mark {

@@ -87,7 +87,9 @@
   transform: translate(-50%, calc(100% + 40px));
   transition:
     transform 0.55s var(--ease),
-    opacity 0.4s var(--ease);
+    opacity 0.4s var(--ease),
+    width 0.45s var(--ease),
+    height 0.45s var(--ease);
 }
 
 .term.is-open {
@@ -99,6 +101,29 @@
   display: none;
 }
 
+/* minimised: the panel collapses to its title bar, which is then the way back.
+   An explicit height (rather than auto) so the collapse animates; visibility keeps
+   the hidden input out of the tab order. */
+.term--min {
+  height: 45px;
+  overflow: hidden;
+}
+
+.term--min .term__bar {
+  border-bottom: 0;
+  cursor: pointer;
+}
+
+.term--min :is(.term__out, .term__in) {
+  visibility: hidden;
+}
+
+/* maximised: fills the viewport inside the page gutter */
+.term--max {
+  width: calc(100% - 2 * var(--pad));
+  height: calc(100svh - 2 * max(16px, env(safe-area-inset-bottom)));
+}
+
 .term__bar {
   display: flex;
   align-items: center;
@@ -107,16 +132,57 @@
   border-bottom: 1px solid var(--line);
 }
 
+/* the macOS traffic lights: the one place colour appears on the site.
+   Glyphs stay hidden until the group is hovered, exactly as macOS reveals them. */
 .term__dots {
   display: flex;
-  gap: 7px;
+  gap: 8px;
 }
 
-.term__dots i {
-  width: 11px;
-  height: 11px;
+.term__light {
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
   border-radius: 50%;
-  background: #2c2c2a;
+  cursor: pointer;
+}
+
+.term__light--close {
+  background: #ff5f57;
+}
+
+.term__light--min {
+  background: #febc2e;
+}
+
+.term__light--max {
+  background: #28c840;
+}
+
+.term__light svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+}
+
+.term__dots:hover .term__light svg,
+.term__light:focus-visible svg {
+  opacity: 1;
+}
+
+/* no pointer to hover with: the glyphs stay on, so a tap target is still readable */
+@media (hover: none) {
+  .term__light svg {
+    opacity: 1;
+  }
 }
 
 .term__title {

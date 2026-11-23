@@ -10,9 +10,25 @@ import { bright, cmd, dim, escapeHtml } from './format';
 
 const PROMPT = 'jappreet@bengaluru:~$';
 
+/** The three macOS window buttons: a glyph that only shows when the group is hovered. */
+const LIGHT_GLYPHS: Record<string, string> = {
+  close: '<path d="M4 4l4 4M8 4l-4 4" />',
+  min: '<path d="M3.5 6h5" />',
+  max: '<path d="M6 3.5v5M3.5 6h5" />',
+};
+
+const light = (action: string, label: string) =>
+  `<button type="button" class="term__light term__light--${action}" data-light="${action}" aria-label="${label}">
+      <svg viewBox="0 0 12 12" aria-hidden="true">${LIGHT_GLYPHS[action]}</svg>
+    </button>`;
+
 const PANEL_HTML = `
   <div class="term__bar">
-    <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="term__dots">
+      ${light('close', 'Close terminal')}
+      ${light('min', 'Minimise terminal')}
+      ${light('max', 'Maximise terminal')}
+    </span>
     <span class="term__title">jappreet@bengaluru: ~ — zsh</span>
     <button type="button" class="term__close" aria-label="Close terminal">esc</button>
   </div>
@@ -97,11 +113,13 @@ export function mountTerminal(): void {
   // --- open and close ---------------------------------------------------------------------------
   function open(): void {
     if (isOpen()) {
+      panel.classList.remove('term--min'); // already open: restore it rather than do nothing
       input.focus();
       return;
     }
     returnFocusTo = document.activeElement;
     panel.hidden = false;
+    panel.classList.remove('term--min'); // never reopen collapsed
     requestAnimationFrame(() => panel.classList.add('is-open'));
     document.body.classList.add('term-on');
 
@@ -125,7 +143,10 @@ export function mountTerminal(): void {
     panel.classList.remove('is-open');
     document.body.classList.remove('term-on');
     setTimeout(() => {
-      if (!isOpen()) panel.hidden = true;
+      if (!isOpen()) {
+        panel.hidden = true;
+        panel.classList.remove('term--min', 'term--max');
+      }
     }, 450); // after the slide-down transition
     if (returnFocusTo instanceof HTMLElement) returnFocusTo.focus({ preventScroll: true });
   }
@@ -141,6 +162,26 @@ export function mountTerminal(): void {
     run(value);
   });
   panel.querySelector('.term__close')!.addEventListener('click', close);
+
+  // the macOS window buttons: close, collapse to the title bar, fill the viewport
+  panel.querySelector('.term__dots')!.addEventListener('click', (e) => {
+    const action = (e.target as Element).closest<HTMLElement>('[data-light]')?.dataset.light;
+    if (action === 'close') close();
+    else if (action === 'min') panel.classList.add('term--min');
+    else if (action === 'max') {
+      panel.classList.toggle('term--max');
+      panel.classList.remove('term--min');
+      input.focus({ preventScroll: true });
+    }
+  });
+
+  // while collapsed, the title bar is the way back
+  panel.querySelector('.term__bar')!.addEventListener('click', (e) => {
+    if (!panel.classList.contains('term--min')) return;
+    if ((e.target as Element).closest('[data-light], .term__close')) return;
+    panel.classList.remove('term--min');
+    input.focus({ preventScroll: true });
+  });
 
   // clickable commands in the output, and a click anywhere else focuses the prompt
   output.addEventListener('click', (e) => {

@@ -1,0 +1,540 @@
+/* A case-study page: a long read with diagrams. Shares every token with the landing page. */
+
+.case {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
+/* --- hero ---------------------------------------------------------------------------- */
+
+.case__hero {
+  padding: calc(var(--bar-h) + 20px) 0 clamp(56px, 7vw, 92px);
+  border-bottom: 1px solid var(--line);
+}
+
+.case__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px 24px;
+}
+
+.case__back {
+  color: var(--muted);
+  transition: color 0.3s;
+}
+
+.case__back:hover {
+  color: var(--fg);
+}
+
+.case__eyebrow {
+  margin: clamp(44px, 7vw, 92px) 0 0;
+  color: var(--muted);
+}
+
+.case__hero h1 {
+  margin: 14px 0 0;
+  font: 500 clamp(56px, 12vw, 176px) / 0.9 var(--sans);
+  letter-spacing: -0.055em;
+}
+
+.case__tag {
+  margin: 24px 0 0;
+  max-width: 30ch;
+  font: 300 clamp(21px, 2.4vw, 32px) / 1.3 var(--sans);
+  letter-spacing: -0.025em;
+  color: var(--muted);
+}
+
+.case__tag em {
+  color: var(--fg);
+}
+
+/* the headline result, three ways — the hero's visual anchor */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  margin: clamp(44px, 6vw, 80px) 0 0;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.figures dt {
+  font: 300 clamp(38px, 5.2vw, 72px) / 1 var(--sans);
+  letter-spacing: -0.05em;
+}
+
+.figures dd {
+  margin: 12px 0 0;
+  font-size: 14.5px;
+}
+
+.figures dd span {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+.case__stack {
+  margin: clamp(28px, 3.5vw, 40px) 0 0;
+}
+
+.case__stack .muted {
+  display: inline-block;
+  min-width: 54px;
+}
+
+/* --- sections and prose ----------------------------------------------------------------- */
+
+.case section {
+  padding: clamp(64px, 9vw, 120px) 0 0;
+}
+
+/* the "04 / the bug that mattered" label above each heading */
+.case section > p.mono {
+  margin: 0;
+}
+
+.case h2 {
+  max-width: 20ch;
+  margin: 10px 0 0;
+  font: 400 clamp(28px, 3.6vw, 52px) / 1.05 var(--sans);
+  letter-spacing: -0.04em;
+}
+
+.case h3 {
+  margin: 0;
+  font: 400 clamp(19px, 1.9vw, 24px) / 1.25 var(--sans);
+  letter-spacing: -0.025em;
+}
+
+/* Running prose only. :not([class]) keeps this off .lede, .case__tag and friends, which
+   carry their own type — otherwise this rule outranks them and they all come out 16.5px. */
+.case :where(p:not([class])) {
+  max-width: 68ch;
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 16.5px;
+}
+
+.case p strong {
+  color: var(--fg);
+  font-weight: 400;
+}
+
+.case p code,
+.case li code {
+  font: 400 0.9em var(--mono);
+  color: var(--fg);
+}
+
+.lede {
+  max-width: 60ch;
+  margin: 20px 0 0;
+  color: var(--fg);
+  font-size: clamp(17px, 1.6vw, 20px);
+  line-height: 1.55;
+}
+
+/* --- numbered principles and feature groups ---------------------------------------------- */
+
+.rules {
+  list-style: none;
+  counter-reset: rule;
+  margin: clamp(32px, 4vw, 48px) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border-block: 1px solid var(--line);
+}
+
+.rules li {
+  counter-increment: rule;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 20px;
+  padding: 22px 0;
+  background: var(--bg);
+}
+
+.rules li::before {
+  content: '0' counter(rule);
+  grid-row: span 2;
+  font: 400 12px/1.6 var(--mono);
+  color: var(--muted);
+}
+
+/* the title and its line both belong in the second column, stacked */
+.rules b,
+.rules span {
+  grid-column: 2;
+}
+
+.rules b {
+  font-weight: 400;
+  color: var(--fg);
+}
+
+.rules span {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: clamp(32px, 4vw, 48px);
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.group {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: clamp(22px, 2.6vw, 34px);
+  background: var(--bg);
+  transition: background 0.5s var(--ease);
+}
+
+.group:hover {
+  background: var(--bg-2);
+}
+
+.group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.group li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 10px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.group li::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  margin-top: 9px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+
+/* --- figures: every diagram sits in one -------------------------------------------------- */
+
+.fig {
+  margin: clamp(32px, 4vw, 52px) 0 0;
+}
+
+.fig__frame {
+  padding: clamp(16px, 2.4vw, 32px);
+  border: 1px solid var(--line);
+  overflow-x: auto;
+}
+
+.fig svg {
+  display: block;
+  width: 100%;
+  min-width: 620px;
+  height: auto;
+}
+
+.fig__note {
+  max-width: 68ch;
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+/* shared diagram ink */
+.dg-box {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.dg-group {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.dg-edge {
+  fill: none;
+  stroke: var(--dim);
+  stroke-width: 1;
+}
+
+.dg-edge--soft {
+  stroke-dasharray: 3 4;
+}
+
+.dg-head {
+  fill: var(--fg);
+  font: 400 13px var(--sans);
+}
+
+.dg-sub,
+.dg-label {
+  fill: var(--muted);
+  font: 400 11px var(--mono);
+}
+
+.dg-lane {
+  fill: var(--muted);
+  font: 400 10.5px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* hovering one node dims the rest and lights its edges */
+.fig--live .dg-node,
+.fig--live .dg-edge {
+  transition:
+    opacity 0.3s var(--ease),
+    stroke 0.3s var(--ease);
+}
+
+.fig--live.is-picking .dg-node:not(.is-on),
+.fig--live.is-picking .dg-edge:not(.is-on) {
+  opacity: 0.22;
+}
+
+.fig--live .dg-edge.is-on {
+  stroke: var(--fg);
+}
+
+.fig--live .dg-node.is-on .dg-box {
+  stroke: var(--fg);
+}
+
+/* the boxes are drawn with fill: none, so only their 1px stroke would be hoverable.
+   pointer-events: all makes the whole box catch the pointer. */
+.dg-node {
+  cursor: default;
+  pointer-events: all;
+}
+
+/* --- ER diagram -------------------------------------------------------------------------- */
+
+.er-head-row {
+  fill: rgba(237, 237, 234, 0.06);
+}
+
+.er-name {
+  fill: var(--fg);
+  font: 400 12px var(--mono);
+}
+
+.er-col {
+  fill: var(--muted);
+  font: 400 11px var(--mono);
+}
+
+.er-key {
+  fill: var(--fg);
+}
+
+.er-rule {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+/* --- the before / after toggle ------------------------------------------------------------ */
+
+.swap {
+  display: inline-flex;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+}
+
+.swap button {
+  padding: 10px 18px;
+  font: 400 12px/1 var(--mono);
+  color: var(--muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition:
+    color 0.3s,
+    background 0.3s;
+}
+
+.swap button + button {
+  border-left: 1px solid var(--line);
+}
+
+.swap button[aria-pressed='true'] {
+  color: var(--bg);
+  background: var(--fg);
+}
+
+.swap__panel[hidden] {
+  display: none;
+}
+
+.step-bad {
+  stroke: #ff5f57;
+}
+
+.text-bad {
+  fill: #ff5f57;
+}
+
+.step-good {
+  stroke: #28c840;
+}
+
+.text-good {
+  fill: #28c840;
+}
+
+/* --- numbers ------------------------------------------------------------------------------- */
+
+.table-wrap {
+  margin-top: clamp(28px, 3.5vw, 44px);
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+th,
+td {
+  padding: 14px 16px 14px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+thead th {
+  font: 400 12px/1.6 var(--mono);
+  color: var(--muted);
+  text-transform: lowercase;
+  border-bottom-color: var(--fg);
+}
+
+td:not(:first-child),
+th:not(:first-child) {
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 13.5px;
+}
+
+td:first-child {
+  color: var(--muted);
+}
+
+.was {
+  color: var(--dim);
+  text-decoration: line-through;
+}
+
+.now-val {
+  color: var(--fg);
+}
+
+/* --- code ------------------------------------------------------------------------------------ */
+
+pre {
+  margin: clamp(24px, 3vw, 36px) 0 0;
+  padding: clamp(18px, 2.2vw, 26px);
+  overflow-x: auto;
+  font: 400 13px/1.7 var(--mono);
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+
+pre .c {
+  color: var(--dim);
+}
+
+pre .k {
+  color: var(--muted);
+}
+
+/* the line the whole section is about; box-decoration-break keeps a wrapped
+   highlight looking like one run rather than two ragged blocks */
+pre mark {
+  color: var(--fg);
+  background: rgba(40, 200, 64, 0.16);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 1px 0;
+}
+
+/* --- decisions ---------------------------------------------------------------------------------- */
+
+.calls {
+  display: grid;
+  gap: 1px;
+  margin-top: clamp(32px, 4vw, 48px);
+  background: var(--line);
+  border-block: 1px solid var(--line);
+}
+
+.call {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 20px clamp(24px, 4vw, 56px);
+  padding: clamp(22px, 2.8vw, 32px) 0;
+  background: var(--bg);
+}
+
+.call p {
+  margin: 0;
+}
+
+/* --- closing ------------------------------------------------------------------------------------- */
+
+.case__end {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  margin: clamp(80px, 11vw, 150px) 0 0;
+  padding: 26px 0 calc(28px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 860px) {
+  .figures {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .figures dd {
+    margin-top: 6px;
+  }
+
+  .groups,
+  .call {
+    grid-template-columns: 1fr;
+  }
+
+  .rules li {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .fig__frame {
+    padding: 12px;
+  }
+}
