@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>404 — Jappreet Singh Chhabra</title>
+    <meta name="description" content="That page is not here. A few that are." />
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="robots" content="noindex" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/#now" data-magnetic>now</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="lost">
+      <p class="lost__code">404</p>
+
+      <!-- a shell session, because that is this site's voice. The path is filled in by script. -->
+      <div class="lost__shell mono" role="group" aria-label="What went wrong">
+        <p class="lost__line">
+          <span class="t-prompt">jappreet@bengaluru:~$</span> cd
+          <span id="lost-path">/the/page/you/wanted</span>
+        </p>
+        <p class="lost__line lost__err">cd: no such file or directory</p>
+        <p class="lost__line lost__hint">these do exist:</p>
+      </div>
+
+      <nav class="lost__links" aria-label="Pages that exist">
+        <a href="/" data-magnetic>
+          <span class="lost__path mono">/</span>
+          <span class="lost__what">the portfolio</span>
+        </a>
+        <a href="/work/99ile/" data-magnetic>
+          <span class="lost__path mono">/work/99ile</span>
+          <span class="lost__what">sync that never skips a record</span>
+        </a>
+        <a href="/work/local-llm-gateway/" data-magnetic>
+          <span class="lost__path mono">/work/local-llm-gateway</span>
+          <span class="lost__what">two guards and the order of operations</span>
+        </a>
+        <a href="mailto:jappreets4747@gmail.com" data-magnetic>
+          <span class="lost__path mono">mailto:</span>
+          <span class="lost__what">tell me what you were looking for</span>
+        </a>
+      </nav>
+
+      <p class="lost__tip mono muted">
+        or press <kbd>~</kbd> and type <button type="button" class="t-cmd" data-open-terminal>ls</button>
+      </p>
+    </main>
+
+    <script type="module" src="/src/not-found.ts"></script>
+  </body>
+</html>

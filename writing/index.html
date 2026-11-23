@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Writing — Jappreet Singh Chhabra</title>
+    <meta
+      name="description"
+      content="Notes on backend engineering: concurrency, correctness under load, and the bugs worth writing down."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href="https://jappreet.netlify.app/writing/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jappreet Singh Chhabra" />
+    <meta property="og:url" content="https://jappreet.netlify.app/writing/" />
+    <meta property="og:title" content="Writing — Jappreet Singh Chhabra" />
+    <meta
+      property="og:description"
+      content="Notes on backend engineering: concurrency, correctness under load, and the bugs worth writing down."
+    />
+    <meta property="og:image" content="https://jappreet.netlify.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://jappreet.netlify.app/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/#now" data-magnetic>now</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+        <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="case" id="top">
+      <header class="case__hero">
+        <div class="case__top mono">
+          <a class="case__back" href="/" data-magnetic>← portfolio</a>
+        </div>
+
+        <p class="case__eyebrow mono">writing</p>
+        <h1>Notes</h1>
+        <p class="case__tag">
+          What I learned the hard way — <em>mostly about things going wrong at the same time.</em>
+        </p>
+      </header>
+
+      <!-- ============ POSTS ============
+           To add one, copy a <li class="post"> block. Keep them newest first, and keep each
+           one's year heading above it. An external post adds class="is-away" and target="_blank". -->
+      <section id="posts" aria-labelledby="posts-h">
+        <h2 id="posts-h" class="sr-only">Posts</h2>
+
+        <!-- Nothing is published yet. Delete this block once the first post ships. -->
+        <div class="soon">
+          <p class="soon__line">Nothing published yet.</p>
+          <p>
+            The two case studies are the long form for now, and they carry the detail a post would: the race
+            condition that made a device skip a record for good, and the ordering decision that keeps
+            half-written answers out of a database.
+          </p>
+          <div class="soon__links mono">
+            <a class="u" href="/work/99ile/" data-magnetic>the sync race →</a>
+            <a class="u" href="/work/local-llm-gateway/" data-magnetic>two guards and the order →</a>
+          </div>
+        </div>
+
+        <!--
+        <ol class="posts">
+          <li class="post-year"><span class="mono">2026</span></li>
+          <li class="post">
+            <a href="/writing/the-sequence-that-lied/">
+              <span class="post__date mono">12 Dec 2026</span>
+              <span class="post__title">The sequence that lied</span>
+              <span class="post__blurb">Postgres hands out numbers before it commits, and a cursor can walk straight past a row.</span>
+              <span class="post__meta mono">8 min · postgres · concurrency</span>
+            </a>
+          </li>
+        </ol>
+        -->
+      </section>
+
+      <div class="case__end mono">
+        <a class="u" href="/" data-magnetic>← portfolio</a>
+        <span class="links">
+          <a href="/work/99ile/" data-magnetic>99ile →</a>
+          <a href="/work/local-llm-gateway/" data-magnetic>gateway →</a>
+          <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+        </span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/writing.ts"></script>
+  </body>
+</html>

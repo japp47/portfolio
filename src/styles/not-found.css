@@ -1,0 +1,98 @@
+/* 404: a shell session that failed, then the paths that do exist. */
+@import './tokens.css';
+@import './base.css';
+@import './effects.css';
+@import './header.css';
+@import './terminal.css';
+@import './motion.css';
+
+.lost {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: calc(var(--bar-h) + 40px) var(--pad) calc(48px + env(safe-area-inset-bottom));
+}
+
+.lost__code {
+  margin: clamp(24px, 5vw, 56px) 0 0;
+  font: 300 clamp(96px, 22vw, 280px) / 0.84 var(--sans);
+  letter-spacing: -0.06em;
+}
+
+.lost__shell {
+  margin: clamp(28px, 4vw, 44px) 0 0;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  text-transform: none;
+}
+
+/* no pre-wrap: the markup is indented for reading, and that indentation is not content */
+.lost__line {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.lost__line + .lost__line {
+  margin-top: 6px;
+}
+
+.lost__err {
+  color: #ff5f57;
+}
+
+.lost__hint {
+  margin-top: 16px !important;
+  color: var(--muted);
+}
+
+.lost__links {
+  display: grid;
+  margin-top: clamp(28px, 4vw, 40px);
+  border-top: 1px solid var(--line);
+}
+
+.lost__links a {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: 12px 32px;
+  align-items: baseline;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+  transition: padding-left 0.4s var(--ease);
+}
+
+.lost__links a:hover {
+  padding-left: 14px;
+}
+
+.lost__path {
+  color: var(--fg);
+  font-size: 14px;
+  text-transform: none;
+}
+
+.lost__what {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.lost__links a:hover .lost__what {
+  color: var(--fg);
+}
+
+.lost__tip {
+  margin: clamp(28px, 4vw, 40px) 0 0;
+  text-transform: none;
+}
+
+.lost__tip .t-cmd {
+  font: inherit;
+}
+
+@media (max-width: 860px) {
+  .lost__links a {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 16px 0;
+  }
+}
