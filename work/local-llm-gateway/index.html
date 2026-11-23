@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Local LLM Gateway — Jappreet Singh Chhabra</title>
+    <meta
+      name="description"
+      content="A private AI assistant that runs on your own machine: a Fastify gateway in front of Ollama, two storage backends behind one interface, and the ordering decision that keeps half-written answers out of the database."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href="https://jappreet.netlify.app/work/local-llm-gateway/" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Jappreet Singh Chhabra" />
+    <meta property="og:url" content="https://jappreet.netlify.app/work/local-llm-gateway/" />
+    <meta property="og:title" content="Local LLM Gateway: two guards and the order of operations" />
+    <meta
+      property="og:description"
+      content="One GPU, one Ollama, and a stream that can die halfway. How the gateway keeps the database from holding half an answer."
+    />
+    <meta property="og:image" content="https://jappreet.netlify.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://jappreet.netlify.app/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/#now" data-magnetic>now</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+        <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="case" id="top">
+      <!-- ============ HERO ============ -->
+      <header class="case__hero">
+        <div class="case__top mono">
+          <a class="case__back" href="/#work" data-magnetic>← all work</a>
+          <span class="links">
+            <a
+              href="https://www.npmjs.com/package/local-llm-gateway"
+              target="_blank"
+              rel="noopener"
+              data-magnetic
+              >npm ↗</a
+            >
+            <a href="https://github.com/japp47/local-llm-gateway" target="_blank" rel="noopener" data-magnetic
+              >github ↗</a
+            >
+          </span>
+        </div>
+
+        <p class="case__eyebrow mono">case study · 2026 · MIT · built and run solo</p>
+        <h1 class="is-long">Local LLM<br />Gateway</h1>
+        <p class="case__tag">
+          A private AI assistant that runs on your own machine — <em>your conversations never leave it.</em>
+        </p>
+
+        <dl class="figures">
+          <div>
+            <dt>155</dt>
+            <dd>end-to-end checks<span class="mono">against a real Ollama, in both modes</span></dd>
+          </div>
+          <div>
+            <dt>2</dt>
+            <dd>storage backends<span class="mono">one interface, one test suite</span></dd>
+          </div>
+          <div>
+            <dt>0</dt>
+            <dd>half-written answers<span class="mono">the stream opens before anything is saved</span></dd>
+          </div>
+        </dl>
+
+        <p class="case__stack mono">
+          <span class="muted">install</span> npm install -g local-llm-gateway · llm start · llm chat "hello"
+        </p>
+      </header>
+
+      <!-- ============ 01 / WHAT ============ -->
+      <section id="what" aria-labelledby="what-h">
+        <p class="mono muted">01 / what it is</p>
+        <h2 id="what-h">Your own models, on your own machine.</h2>
+
+        <p class="lede">
+          A small Fastify server in front of Ollama, plus a terminal app and a browser chat page. It keeps
+          your history, picks a model that fits your machine's memory, explains problems in plain words, and
+          backs your chats up. No Docker, no database to set up.
+        </p>
+        <p>
+          The engineering interest is not the model part — it is everything around it. There is
+          <strong>one GPU, one Ollama, and a stream that can die halfway through.</strong> The gateway's job
+          is to make sure that when something goes wrong, the database is not left holding half an answer.
+        </p>
+        <p>
+          Target hardware is a MacBook Air M4 with 16 GB, and every performance claim in the repo is measured
+          there. That one machine is why admission control exists at all: a second concurrent generation does
+          not halve throughput, it pushes the model out of unified memory and falls off a cliff. So the
+          default is one generation at a time, with a bounded queue in front of it.
+        </p>
+        <p>
+          The second rule is that <strong>the run mode is chosen only by configuration.</strong> A
+          <code>DATABASE_URL</code> means server mode on PostgreSQL and Redis; without one it is single-user
+          mode on SQLite. Same code, same tests, two deployments.
+        </p>
+      </section>
+
+      <!-- ============ 02 / ARCHITECTURE ============ -->
+      <section id="architecture" aria-labelledby="arch-h">
+        <p class="mono muted">02 / architecture</p>
+        <h2 id="arch-h">Three ways in, one way down.</h2>
+
+        <p>
+          Every request arrives through the same hooks whether it came from the CLI, the browser page or a raw
+          HTTP client. Point at a box to follow what it touches.
+        </p>
+
+        <figure class="fig fig--live">
+          <div class="fig__frame">
+            <svg
+              viewBox="0 0 1000 620"
+              role="img"
+              aria-label="Architecture: a CLI, a browser page and HTTP clients all enter through an auth hook and a rate limiter, into the conversation service and storage ports, which reach Ollama, SQLite and PostgreSQL with Redis."
+            >
+              <rect class="dg-group" x="36" y="58" width="908" height="108" />
+              <text class="dg-lane" x="40" y="48">three ways in</text>
+              <rect class="dg-group" x="36" y="236" width="908" height="200" />
+              <text class="dg-lane" x="40" y="226">the gateway · fastify</text>
+
+              <!-- edges -->
+              <g class="dg-edge" data-link="cli auth">
+                <path d="M190,138 V256" />
+                <path d="M184,248 L190,258 L196,248" />
+              </g>
+              <g class="dg-edge" data-link="web auth">
+                <path d="M500,138 V200 H300 V256" />
+                <path d="M294,248 L300,258 L306,248" />
+              </g>
+              <g class="dg-edge" data-link="api auth">
+                <path d="M800,138 V216 H380 V256" />
+                <path d="M374,248 L380,258 L386,248" />
+              </g>
+              <g class="dg-edge" data-link="auth rate">
+                <path d="M460,290 H510" />
+                <path d="M502,284 L512,290 L502,296" />
+              </g>
+              <g class="dg-edge" data-link="rate svc">
+                <path d="M720,316 V338 H260 V352" />
+                <path d="M254,344 L260,354 L266,344" />
+              </g>
+              <g class="dg-edge" data-link="svc ports">
+                <path d="M460,386 H510" />
+                <path d="M502,380 L512,386 L502,392" />
+              </g>
+              <g class="dg-edge" data-link="svc ollama">
+                <path d="M150,412 V492" />
+                <path d="M144,484 L150,494 L156,484" />
+                <text class="dg-label" x="162" y="458">streams</text>
+              </g>
+              <g class="dg-edge" data-link="ports sqlite">
+                <path d="M660,412 V460 H500 V492" />
+                <path d="M494,484 L500,494 L506,484" />
+              </g>
+              <g class="dg-edge" data-link="ports pg">
+                <path d="M780,412 V460 H810 V492" />
+                <path d="M804,484 L810,494 L816,484" />
+              </g>
+
+              <!-- nodes -->
+              <g class="dg-node" data-node="cli" tabindex="0">
+                <rect class="dg-box" x="60" y="86" width="260" height="52" />
+                <text class="dg-head" x="78" y="110">llm CLI</text>
+                <text class="dg-sub" x="78" y="128">own config · profiles · key safety</text>
+              </g>
+              <g class="dg-node" data-node="web" tabindex="0">
+                <rect class="dg-box" x="370" y="86" width="260" height="52" />
+                <text class="dg-head" x="388" y="110">Browser chat</text>
+                <text class="dg-sub" x="388" y="128">React · served by the gateway</text>
+              </g>
+              <g class="dg-node" data-node="api" tabindex="0">
+                <rect class="dg-box" x="680" y="86" width="240" height="52" />
+                <text class="dg-head" x="698" y="110">Any HTTP client</text>
+                <text class="dg-sub" x="698" y="128">bearer API key</text>
+              </g>
+
+              <g class="dg-node" data-node="auth" tabindex="0">
+                <rect class="dg-box" x="60" y="264" width="400" height="52" />
+                <text class="dg-head" x="78" y="288">Auth hook</text>
+                <text class="dg-sub" x="78" y="306">key hash, or a session cookie behind host checks</text>
+              </g>
+              <g class="dg-node" data-node="rate" tabindex="0">
+                <rect class="dg-box" x="520" y="264" width="400" height="52" />
+                <text class="dg-head" x="538" y="288">Rate limit</text>
+                <text class="dg-sub" x="538" y="306">keyed by key id, never the raw key</text>
+              </g>
+              <g class="dg-node" data-node="svc" tabindex="0">
+                <rect class="dg-box" x="60" y="360" width="400" height="52" />
+                <text class="dg-head" x="78" y="384">Conversation service</text>
+                <text class="dg-sub" x="78" y="402">lease → context → semaphore → stream</text>
+              </g>
+              <g class="dg-node" data-node="ports" tabindex="0">
+                <rect class="dg-box" x="520" y="360" width="400" height="52" />
+                <text class="dg-head" x="538" y="384">Storage ports</text>
+                <text class="dg-sub" x="538" y="402">one interface · openStorage picks the adapter</text>
+              </g>
+
+              <g class="dg-node" data-node="ollama" tabindex="0">
+                <rect class="dg-box" x="60" y="500" width="260" height="52" />
+                <text class="dg-head" x="78" y="524">Ollama</text>
+                <text class="dg-sub" x="78" y="542">bound to localhost</text>
+              </g>
+              <g class="dg-node" data-node="sqlite" tabindex="0">
+                <rect class="dg-box" x="370" y="500" width="260" height="52" />
+                <text class="dg-head" x="388" y="524">SQLite</text>
+                <text class="dg-sub" x="388" y="542">single-user mode · nothing to set up</text>
+              </g>
+              <g class="dg-node" data-node="pg" tabindex="0">
+                <rect class="dg-box" x="680" y="500" width="260" height="52" />
+                <text class="dg-head" x="698" y="524">PostgreSQL + Redis</text>
+                <text class="dg-sub" x="698" y="542">server mode</text>
+              </g>
+            </svg>
+          </div>
+          <p class="fig__note mono muted">
+            The seam is src/storage/ports.ts. Its invariant: every method that takes a user id is scoped by it
+            — an id alone never grants access.
+          </p>
+        </figure>
+
+        <p>
+          That seam was not designed up front; it was forced. Three Postgres-only features had to be rewritten
+          for SQLite: <code>percentile_cont</code> for the stats endpoint, reimplemented exactly in
+          <code>src/lib/stats.ts</code>; <code>FOR SHARE</code> row locks when forking a conversation, which
+          became a transaction; and <code>make_interval</code> in the lease. The same integration suite runs
+          against both, and there is a test file that exists purely for the cases where two adapters tend to
+          drift apart.
+        </p>
+      </section>
+
+      <!-- ============ 03 / DATA MODEL ============ -->
+      <section id="data" aria-labelledby="data-h">
+        <p class="mono muted">03 / data model</p>
+        <h2 id="data-h">Five tables, mirrored twice.</h2>
+
+        <p>
+          Drizzle, with the Postgres and SQLite schemas written table for table against each other. The SQLite
+          differences are deliberate and commented: ids are text UUIDs made in application code, timestamps
+          are integer milliseconds, and the message sequence is the autoincrement primary key.
+        </p>
+
+        <figure class="fig fig--live">
+          <div class="fig__frame">
+            <svg
+              viewBox="0 0 820 630"
+              role="img"
+              aria-label="Entity relationship diagram: users own api keys, conversations and generations; conversations have many messages and can fork from themselves."
+            >
+              <g class="dg-edge" data-link="users keys">
+                <path d="M320,73 H410" />
+                <path d="M402,67 L412,73 L402,79" />
+                <text class="dg-label" x="365" y="64" text-anchor="middle">1 — N</text>
+              </g>
+              <g class="dg-edge" data-link="users convs">
+                <path d="M250,116 V190 H570 V220" />
+                <path d="M564,212 L570,222 L576,212" />
+                <text class="dg-label" x="420" y="182" text-anchor="middle">1 — N</text>
+              </g>
+              <g class="dg-edge" data-link="users gens">
+                <path d="M120,116 V290" />
+                <path d="M114,282 L120,292 L126,282" />
+                <text class="dg-label" x="132" y="210">1 — N</text>
+              </g>
+              <g class="dg-edge" data-link="convs msgs">
+                <path d="M570,396 V440" />
+                <path d="M564,432 L570,442 L576,432" />
+                <text class="dg-label" x="582" y="422">cascade</text>
+              </g>
+              <g class="dg-edge" data-link="convs convs">
+                <path d="M720,280 H756 V350 H730" />
+                <path d="M738,344 L728,350 L738,356" />
+                <text class="dg-label" x="764" y="318">fork</text>
+              </g>
+              <g class="dg-edge" data-link="convs gens">
+                <path d="M418,330 H350" />
+                <path d="M358,324 L348,330 L358,336" />
+              </g>
+
+              <g class="dg-node" data-node="users" tabindex="0">
+                <rect class="dg-box" x="40" y="30" width="280" height="86" />
+                <rect class="er-head-row" x="41" y="31" width="278" height="25" />
+                <line class="er-rule" x1="40" y1="56" x2="320" y2="56" />
+                <text class="er-name" x="54" y="48">users</text>
+                <text class="er-col" x="54" y="70">
+                  <tspan class="er-key">PK</tspan>
+                  id
+                </text>
+                <text class="er-col" x="54" y="90">
+                  <tspan class="er-key">UK</tspan>
+                  email
+                </text>
+                <text class="er-col" x="54" y="110">created_at</text>
+              </g>
+
+              <g class="dg-node" data-node="keys" tabindex="0">
+                <rect class="dg-box" x="420" y="30" width="300" height="126" />
+                <rect class="er-head-row" x="421" y="31" width="298" height="25" />
+                <line class="er-rule" x1="420" y1="56" x2="720" y2="56" />
+                <text class="er-name" x="434" y="48">api_keys</text>
+                <text class="er-col" x="434" y="70">
+                  <tspan class="er-key">PK</tspan>
+                  id
+                </text>
+                <text class="er-col" x="434" y="90">
+                  <tspan class="er-key">FK</tspan>
+                  user_id
+                </text>
+                <text class="er-col" x="434" y="110">
+                  <tspan class="er-key">UK</tspan>
+                  key_hash · sha-256
+                </text>
+                <text class="er-col" x="434" y="130">label</text>
+                <text class="er-col" x="434" y="150">revoked_at · then 401</text>
+              </g>
+
+              <g class="dg-node" data-node="convs" tabindex="0">
+                <rect class="dg-box" x="420" y="230" width="300" height="166" />
+                <rect class="er-head-row" x="421" y="231" width="298" height="25" />
+                <line class="er-rule" x1="420" y1="256" x2="720" y2="256" />
+                <text class="er-name" x="434" y="248">conversations</text>
+                <text class="er-col" x="434" y="270">
+                  <tspan class="er-key">PK</tspan>
+                  id
+                </text>
+                <text class="er-col" x="434" y="290">
+                  <tspan class="er-key">FK</tspan>
+                  user_id
+                </text>
+                <text class="er-col" x="434" y="310">title · from the first line</text>
+                <text class="er-col" x="434" y="330">default_model</text>
+                <text class="er-col" x="434" y="350">
+                  <tspan class="er-key">FK</tspan>
+                  parent_conversation_id
+                </text>
+                <text class="er-col" x="434" y="370">lease_until · one at a time</text>
+                <text class="er-col" x="434" y="390">updated_at · precision 3</text>
+              </g>
+
+              <g class="dg-node" data-node="msgs" tabindex="0">
+                <rect class="dg-box" x="420" y="450" width="300" height="146" />
+                <rect class="er-head-row" x="421" y="451" width="298" height="25" />
+                <line class="er-rule" x1="420" y1="476" x2="720" y2="476" />
+                <text class="er-name" x="434" y="468">messages</text>
+                <text class="er-col" x="434" y="490">
+                  <tspan class="er-key">PK</tspan>
+                  id
+                </text>
+                <text class="er-col" x="434" y="510">seq · strict ordering key</text>
+                <text class="er-col" x="434" y="530">
+                  <tspan class="er-key">FK</tspan>
+                  conversation_id
+                </text>
+                <text class="er-col" x="434" y="550">role · user | assistant</text>
+                <text class="er-col" x="434" y="570">content</text>
+                <text class="er-col" x="434" y="590">status · complete|partial|error</text>
+              </g>
+
+              <g class="dg-node" data-node="gens" tabindex="0">
+                <rect class="dg-box" x="40" y="300" width="300" height="166" />
+                <rect class="er-head-row" x="41" y="301" width="298" height="25" />
+                <line class="er-rule" x1="40" y1="326" x2="340" y2="326" />
+                <text class="er-name" x="54" y="318">generations</text>
+                <text class="er-col" x="54" y="340">
+                  <tspan class="er-key">PK</tspan>
+                  id
+                </text>
+                <text class="er-col" x="54" y="360">request_id</text>
+                <text class="er-col" x="54" y="380">
+                  <tspan class="er-key">FK</tspan>
+                  user_id
+                </text>
+                <text class="er-col" x="54" y="400">message_id · no FK, on purpose</text>
+                <text class="er-col" x="54" y="420">queue_wait_ms · ttft_ms</text>
+                <text class="er-col" x="54" y="440">prompt / completion tokens</text>
+                <text class="er-col" x="54" y="460">status · error_code</text>
+              </g>
+            </svg>
+          </div>
+          <p class="fig__note mono muted">
+            Two more tables handle browser sign-in: a one-time code and a session, both stored only as hashes.
+          </p>
+        </figure>
+
+        <p>
+          Three choices in there I would defend.
+          <strong>updated_at is declared with millisecond precision</strong> because it is the keyset
+          pagination cursor, paired with the id as a tie-breaker so equal timestamps are never skipped — and a
+          JavaScript date and JSON only carry milliseconds, so the column matches what can round-trip.
+          <strong>generations.message_id has no foreign key</strong>, so the operational record of what
+          happened survives the message being deleted. And
+          <strong>generations holds one row per attempt, not per success</strong>: queue wait, time to first
+          token, token counts, status and error code. That is the dataset the stats endpoint reads to give p50
+          and p95 per model, for the calling user only.
+        </p>
+      </section>
+
+      <!-- ============ 04 / TWO GUARDS ============ -->
+      <section id="guards" aria-labelledby="guards-h">
+        <p class="mono muted">04 / two guards</p>
+        <h2 id="guards-h">A lease and a semaphore are not the same thing.</h2>
+
+        <p class="lede">
+          They look alike — both stop work from happening twice. But they protect different things, fail
+          differently, and only one of them needs to survive a crash.
+        </p>
+
+        <div class="table-wrap" data-reveal>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col">the lease</th>
+                <th scope="col">the semaphore</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>protects</td>
+                <td class="now-val">one conversation's correctness</td>
+                <td class="now-val">the GPU</td>
+              </tr>
+              <tr>
+                <td>lives in</td>
+                <td>the database, per conversation</td>
+                <td>memory, per process</td>
+              </tr>
+              <tr>
+                <td>turns away with</td>
+                <td>409 conversation_busy</td>
+                <td>503 server_busy, retry-after 5</td>
+              </tr>
+              <tr>
+                <td>survives a crash</td>
+                <td class="now-val">yes — it expires</td>
+                <td>no, and it needn't</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          The lease is a single atomic compare-and-set, so two requests racing for the same conversation
+          cannot both win:
+        </p>
+
+        <pre><code><span class="k">update</span> conversations
+   <span class="k">set</span> lease_until = now() + make_interval(secs =&gt; $2)
+ <span class="k">where</span> id = $1
+   <span class="k">and</span> (lease_until <span class="k">is null</span> <span class="k">or</span> lease_until &lt; now())
+<span class="k">returning</span> id</code></pre>
+
+        <p>
+          Because it expires — three minutes by default — a process that dies mid-generation does not leave a
+          conversation locked forever.
+        </p>
+        <p>
+          The semaphore is about forty lines, and two details matter. Releasing hands the slot
+          <strong>directly</strong> to the next waiter without touching the active count, so there is no
+          window where a freed slot could be claimed twice. And the release function is idempotent, so a
+          double release cannot inflate capacity:
+        </p>
+
+        <pre><code><span class="k">private</span> makeRelease() {
+  <span class="k">let</span> released = <span class="k">false</span>;
+  <span class="k">return</span> () =&gt; {
+    <span class="k">if</span> (released) <span class="k">return</span>;
+    released = <span class="k">true</span>;
+    <span class="k">const</span> next = <span class="k">this</span>.waiters.shift();
+    <mark><span class="k">if</span> (next) next();</mark>       <span class="c">// hand the slot over directly</span>
+    <span class="k">else</span> <span class="k">this</span>.active--;
+  };
+}</code></pre>
+
+        <p>
+          A request aborted while queued splices itself out of the waiter list, rather than being granted a
+          slot nobody is waiting for any more.
+        </p>
+      </section>
+
+      <!-- ============ 05 / THE ORDER ============ -->
+      <section id="order" aria-labelledby="order-h">
+        <p class="mono muted">05 / the order of operations</p>
+        <h2 id="order-h">Open the stream before writing anything.</h2>
+
+        <p class="lede">
+          The obvious order is: save the user's message, return 200, then call the model. It is also wrong —
+          and you only find out when Ollama is stopped.
+        </p>
+
+        <div class="fig" data-swap>
+          <div class="swap" role="group" aria-label="Show the obvious order or the fix">
+            <button type="button" data-show="before" aria-pressed="true">the obvious order</button>
+            <button type="button" data-show="after" aria-pressed="false">open first</button>
+          </div>
+
+          <div class="swap__panel" data-panel="before">
+            <div class="fig__frame">
+              <svg
+                viewBox="0 0 1000 380"
+                data-sequence
+                role="img"
+                aria-label="The obvious order: save the message, return 200, then call Ollama — which fails, leaving a dangling user message."
+              >
+                <g class="dg-edge dg-edge--soft">
+                  <path d="M130,44 V356" />
+                  <path d="M400,44 V356" />
+                  <path d="M670,44 V356" />
+                  <path d="M900,44 V356" />
+                </g>
+                <text class="dg-lane" x="130" y="26" text-anchor="middle">client</text>
+                <text class="dg-lane" x="400" y="26" text-anchor="middle">gateway</text>
+                <text class="dg-lane" x="670" y="26" text-anchor="middle">database</text>
+                <text class="dg-lane" x="900" y="26" text-anchor="middle">ollama</text>
+
+                <g data-step>
+                  <text class="dg-sub" x="265" y="72" text-anchor="middle">send a message</text>
+                  <path class="dg-edge" d="M130,84 H392" />
+                  <path class="dg-edge" d="M384,78 L394,84 L384,90" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="535" y="112" text-anchor="middle">save the user message</text>
+                  <path class="dg-edge" d="M400,124 H662" />
+                  <path class="dg-edge" d="M654,118 L664,124 L654,130" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="265" y="152" text-anchor="middle">200 · the stream is open</text>
+                  <path class="dg-edge" d="M400,164 H138" />
+                  <path class="dg-edge" d="M146,158 L136,164 L146,170" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="650" y="204" text-anchor="middle">now call the model</text>
+                  <path class="dg-edge" d="M400,216 H892" />
+                  <path class="dg-edge" d="M884,210 L894,216 L884,222" />
+                </g>
+                <g data-step>
+                  <text class="text-bad dg-sub" x="650" y="252" text-anchor="middle">
+                    model not installed
+                  </text>
+                  <path class="dg-edge step-bad" d="M900,264 H408" />
+                  <path class="dg-edge step-bad" d="M416,258 L406,264 L416,270" />
+                </g>
+                <g data-step>
+                  <text class="text-bad dg-sub" x="265" y="300" text-anchor="middle">
+                    the error has to go inside the stream
+                  </text>
+                  <path class="dg-edge step-bad" d="M400,312 H138" />
+                  <path class="dg-edge step-bad" d="M146,306 L136,312 L146,318" />
+                </g>
+                <g data-step>
+                  <text class="text-bad dg-sub" x="535" y="348" text-anchor="middle">
+                    …and a dangling user message stays, sent as context on every retry
+                  </text>
+                </g>
+              </svg>
+            </div>
+            <p class="fig__note mono muted">
+              Two commitments were made before the one thing that could fail was tried: a database write, and
+              a 200.
+            </p>
+          </div>
+
+          <div class="swap__panel" data-panel="after" hidden>
+            <div class="fig__frame">
+              <svg
+                viewBox="0 0 1000 380"
+                data-sequence
+                role="img"
+                aria-label="Open first: the stream is opened before anything is written, so a failure is a clean JSON error with nothing saved."
+              >
+                <g class="dg-edge dg-edge--soft">
+                  <path d="M130,44 V356" />
+                  <path d="M400,44 V356" />
+                  <path d="M670,44 V356" />
+                  <path d="M900,44 V356" />
+                </g>
+                <text class="dg-lane" x="130" y="26" text-anchor="middle">client</text>
+                <text class="dg-lane" x="400" y="26" text-anchor="middle">gateway</text>
+                <text class="dg-lane" x="670" y="26" text-anchor="middle">database</text>
+                <text class="dg-lane" x="900" y="26" text-anchor="middle">ollama</text>
+
+                <g data-step>
+                  <text class="dg-sub" x="265" y="72" text-anchor="middle">send a message</text>
+                  <path class="dg-edge" d="M130,84 H392" />
+                  <path class="dg-edge" d="M384,78 L394,84 L384,90" />
+                </g>
+                <g data-step>
+                  <text class="text-good dg-sub" x="650" y="112" text-anchor="middle">
+                    open the stream first
+                  </text>
+                  <path class="dg-edge step-good" d="M400,124 H892" />
+                  <path class="dg-edge step-good" d="M884,118 L894,124 L884,130" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="650" y="164" text-anchor="middle">
+                    headers · the model is loaded
+                  </text>
+                  <path class="dg-edge" d="M900,176 H408" />
+                  <path class="dg-edge" d="M416,170 L406,176 L416,182" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="535" y="216" text-anchor="middle">
+                    only now, save the user message
+                  </text>
+                  <path class="dg-edge" d="M400,228 H662" />
+                  <path class="dg-edge" d="M654,222 L664,228 L654,234" />
+                </g>
+                <g data-step>
+                  <text class="dg-sub" x="265" y="268" text-anchor="middle">
+                    200 · start · delta · meta · done
+                  </text>
+                  <path class="dg-edge" d="M400,280 H138" />
+                  <path class="dg-edge" d="M146,274 L136,280 L146,286" />
+                </g>
+                <g data-step>
+                  <text class="text-good dg-sub" x="500" y="330" text-anchor="middle">
+                    if Ollama had been down: a clean JSON error, nothing written, the retry starts fresh
+                  </text>
+                </g>
+              </svg>
+            </div>
+            <p class="fig__note mono muted">
+              The cost is honest and documented: a cold first answer starts about two seconds later, because
+              opening the stream waits for the model to load.
+            </p>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 56px">And when it dies halfway</h3>
+        <p>
+          If the stream fails after some text has arrived, the accumulated text is saved with status
+          <code>partial</code>, the error code goes into the generations row, and the client still gets its
+          closing events. Error-status messages are filtered out of future context, so a failed answer never
+          poisons the next one. A client that simply disconnects gets no error event at all.
+        </p>
+        <p>
+          Provider failures are a closed set — <code>ollama_unavailable</code>,
+          <code>model_not_installed</code>, <code>model_too_large</code>, <code>model_stopped</code>,
+          <code>provider_error</code> — classified where Ollama's responses are parsed and mapped to HTTP one
+          layer up. The detail string is marked
+          <em>for logs only: never shown to users.</em>
+        </p>
+        <p>
+          One gap is still open, and it is in the repo's own notes: a hard crash, as opposed to a dropped
+          connection, still loses in-flight text. The fix planned is to checkpoint a streaming row every few
+          seconds and mark stale ones partial on startup.
+        </p>
+      </section>
+
+      <!-- ============ 06 / NUMBERS ============ -->
+      <section id="numbers" aria-labelledby="num-h">
+        <p class="mono muted">06 / numbers</p>
+        <h2 id="num-h">Everything runs twice.</h2>
+
+        <p>
+          The integration suite is run against PostgreSQL and against SQLite, from the same files. CI does it
+          on every push: one job with Postgres 16 and Redis 7, a second with no services at all, and a third
+          that packs the npm tarball and smoke-tests it.
+        </p>
+
+        <div class="table-wrap" data-reveal>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">tests</th>
+                <th scope="col">cases</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>End-to-end, against a real Ollama, both modes</td>
+                <td class="now-val">155</td>
+              </tr>
+              <tr>
+                <td>Integration, run against Postgres and SQLite</td>
+                <td class="now-val">83</td>
+              </tr>
+              <tr>
+                <td>CLI</td>
+                <td class="now-val">88</td>
+              </tr>
+              <tr>
+                <td>Gateway unit</td>
+                <td class="now-val">74</td>
+              </tr>
+              <tr>
+                <td>Browser page</td>
+                <td class="now-val">9</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          The end-to-end script is hand-rolled bash rather than a test runner. It builds the gateway, boots it
+          twice — single-user on one port with a temporary data directory, server mode on another against
+          Postgres and Redis — and runs a shared block against both: health and mode, the OpenAPI document,
+          auth failures, the SSE event order, forks, stats, doctor, backup and browser sign-in. That shared
+          block running once per mode is where the number comes from. CI does not run it, because it needs a
+          real Ollama.
+        </p>
+        <p>
+          The OpenAPI 3.1 document is not written by hand either. A contract test asserts that real responses
+          match it <strong>and</strong> that every route Fastify registers is documented, by collecting them
+          from a route hook at startup.
+        </p>
+      </section>
+
+      <!-- ============ 07 / DECISIONS ============ -->
+      <section id="decisions" aria-labelledby="dec-h">
+        <p class="mono muted">07 / decisions</p>
+        <h2 id="dec-h">What I chose, and what it cost.</h2>
+
+        <div class="calls">
+          <div class="call" data-reveal>
+            <h3>Two backends, one interface</h3>
+            <p>
+              SQLite means a new user runs one command and has a working assistant — no Docker, no database.
+              Postgres means a shared one. The cost is that every feature has to be expressed through a
+              storage port, and the whole integration suite runs twice.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>Admission control in-process, in both modes</h3>
+            <p>
+              A distributed limiter would be correct for many servers. There is one GPU, so the honest unit is
+              the process that owns it.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>A pessimistic token counter, behind an interface</h3>
+            <p>
+              Three characters per token, deliberately low so the context window is under-filled rather than
+              over. The provider's real count is stored next to the estimate so the estimator can be
+              calibrated from data later, and the response says which number the client got.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>Request ids generated server-side</h3>
+            <p>
+              Never trust a client-supplied id. Echoed in every error body and in the response header — set by
+              hand on streaming replies, because a hijacked response skips Fastify's normal hook.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>The CLI withholds a key from the wrong gateway</h3>
+            <p>
+              If the base URL points somewhere other than the saved profile and no key was given for it, the
+              saved key is deliberately not sent. Zero-config local pickup reads a credentials file only if
+              the current user owns it and nobody else can read it: a key others can read is not a secret.
+            </p>
+          </div>
+          <div class="call" data-reveal>
+            <h3>A competitor researched, and the conclusion written down</h3>
+            <p>
+              LiteLLM already does gateway features — rate limits, budgets, key management. So the roadmap
+              records that server mode must not be sold on those, and that LiteLLM should instead be
+              considered as one adapter behind the provider interface.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 08 / NEXT ============ -->
+      <section id="next" aria-labelledby="next-h">
+        <p class="mono muted">08 / next</p>
+        <h2 id="next-h">What I'd do next.</h2>
+        <p>
+          Phone access first: a switch that is off by default, QR pairing with one revocable key per device,
+          and HTTPS over Tailscale. Then whichever direction the customer interviews point at. Further out,
+          session recovery for the crash case above, privacy modes enforced server-side and failing closed,
+          documents and memory, and tools over MCP with a permission prompt on every call.
+        </p>
+      </section>
+
+      <div class="case__end mono">
+        <a class="u" href="/#work" data-magnetic>← all work</a>
+        <span class="links">
+          <a href="/work/99ile/" data-magnetic>99ile case study →</a>
+          <a href="https://github.com/japp47/local-llm-gateway" target="_blank" rel="noopener" data-magnetic
+            >repo ↗</a
+          >
+          <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+        </span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/case-study.ts"></script>
+  </body>
+</html>

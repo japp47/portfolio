@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         home: resolve(import.meta.dirname, 'index.html'),
         '99ile': resolve(import.meta.dirname, 'work/99ile/index.html'),
+        gateway: resolve(import.meta.dirname, 'work/local-llm-gateway/index.html'),
       },
     },
   },

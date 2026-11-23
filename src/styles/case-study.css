@@ -9,7 +9,7 @@
 /* --- hero ---------------------------------------------------------------------------- */
 
 .case__hero {
-  padding: calc(var(--bar-h) + 20px) 0 clamp(56px, 7vw, 92px);
+  padding: calc(var(--bar-h) + 16px) 0 clamp(44px, 5vw, 68px);
   border-bottom: 1px solid var(--line);
 }
 
@@ -30,18 +30,23 @@
 }
 
 .case__eyebrow {
-  margin: clamp(44px, 7vw, 92px) 0 0;
+  margin: clamp(28px, 4vw, 52px) 0 0;
   color: var(--muted);
 }
 
 .case__hero h1 {
-  margin: 14px 0 0;
-  font: 500 clamp(56px, 12vw, 176px) / 0.9 var(--sans);
+  margin: 10px 0 0;
+  font: 500 clamp(52px, 11vw, 158px) / 0.9 var(--sans);
   letter-spacing: -0.055em;
 }
 
+/* a title that needs two lines gets a smaller cap, so the hero still fits one screen */
+.case__hero h1.is-long {
+  font-size: clamp(40px, 7.6vw, 106px);
+}
+
 .case__tag {
-  margin: 24px 0 0;
+  margin: 18px 0 0;
   max-width: 30ch;
   font: 300 clamp(21px, 2.4vw, 32px) / 1.3 var(--sans);
   letter-spacing: -0.025em;
@@ -57,8 +62,8 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 28px;
-  margin: clamp(44px, 6vw, 80px) 0 0;
-  padding-top: 28px;
+  margin: clamp(30px, 4vw, 52px) 0 0;
+  padding-top: 24px;
   border-top: 1px solid var(--line);
 }
 
@@ -79,7 +84,7 @@
 }
 
 .case__stack {
-  margin: clamp(28px, 3.5vw, 40px) 0 0;
+  margin: clamp(36px, 3.4vw, 44px) 0 0;
 }
 
 .case__stack .muted {
