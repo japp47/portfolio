@@ -33,18 +33,54 @@
   margin-top: 32px;
 }
 
+/* --- the cover: the title owns the first screen, the list starts on the second --------- */
+
+.case__hero--cover {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+/* the title stays up top; the dot field takes whatever height the screen has left */
+.cover__field {
+  display: block;
+  flex: 1 1 0;
+  width: 100%;
+  min-height: 140px;
+  margin-top: clamp(28px, 4vw, 48px);
+  /* fade in from the horizon and out at the sides, so it has no hard edges */
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 30%),
+    linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-composite: intersect;
+}
+
+.cover__cue {
+  align-self: flex-start;
+  margin-top: clamp(16px, 2vw, 24px);
+  color: var(--muted);
+  transition: color 0.3s var(--ease);
+}
+
+.cover__cue:hover {
+  color: var(--fg);
+}
+
+/* the hero's bottom rule is the top of the list */
+.case__hero--cover + #posts {
+  padding-top: 0;
+}
+
+.case__hero--cover + #posts .posts {
+  margin-top: 0;
+}
+
 /* --- the post list ---------------------------------------------------------------------- */
 
 .posts {
   list-style: none;
   margin: clamp(40px, 6vw, 72px) 0 0;
   padding: 0;
-}
-
-.post-year {
-  padding: 0 0 12px;
-  border-bottom: 1px solid var(--line);
-  color: var(--muted);
 }
 
 .post a {

@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Event-driven architecture, and the part the diagrams leave out — Jappreet Singh Chhabra</title>
+    <meta
+      name="description"
+      content="Every explainer shows one arrow becoming five. The hard problems — the dual write, the outbox, duplicate delivery and ordering — start one step earlier, and the picture never shows them."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href="https://jappreet.netlify.app/writing/event-driven-architecture/" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Jappreet Singh Chhabra" />
+    <meta property="og:url" content="https://jappreet.netlify.app/writing/event-driven-architecture/" />
+    <meta property="og:title" content="Event-driven architecture, and the part the diagrams leave out" />
+    <meta
+      property="og:description"
+      content="The dual write, the outbox, duplicate delivery and ordering — the four things the fan-out picture never shows."
+    />
+    <meta property="og:image" content="https://jappreet.netlify.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://jappreet.netlify.app/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/writing/" data-magnetic>writing</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+        <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="case" id="top">
+      <article>
+        <header class="post-head">
+          <div class="case__top mono">
+            <a class="case__back" href="/writing/" data-magnetic>← writing</a>
+          </div>
+
+          <p class="case__eyebrow mono">architecture</p>
+          <h1>Event-driven architecture, and the part the diagrams leave out</h1>
+          <p class="case__tag">
+            Every explainer shows one arrow becoming five. <em>The hard problems start one step earlier.</em>
+          </p>
+
+          <p class="post-meta mono">
+            <time datetime="2026-06-25">25 Jun 2026</time>
+            <span>·</span>
+            <span>9 min</span>
+            <span>·</span>
+            <span>kafka · postgres · distributed systems</span>
+          </p>
+        </header>
+
+        <div class="post-body">
+          <p class="lede">
+            You post a photo. In the next second it has to reach your followers' feeds, fire notifications,
+            get indexed for search, feed a recommendation model and land in analytics. Every article about
+            this draws the same picture: one service publishes an event, five services listen. It is a good
+            picture and it is true.
+          </p>
+          <p>
+            It is also the easy half. The four things that actually bite — losing an event you thought you
+            published, handling the same event twice, getting two events in the wrong order, and finding out
+            which consumer dropped the ball — are all invisible in that drawing. This is about those.
+          </p>
+
+          <h2>First, the picture everyone draws</h2>
+          <p>
+            The obvious design is a chain. The photo service calls the notification service, which calls
+            search, which calls analytics. It works until it doesn't.
+          </p>
+
+          <div class="fig" data-swap>
+            <div class="swap" role="group" aria-label="Show the chain or the fan-out">
+              <button type="button" data-show="before" aria-pressed="true">the chain</button>
+              <button type="button" data-show="after" aria-pressed="false">the fan-out</button>
+            </div>
+
+            <div class="swap__panel" data-panel="before">
+              <div class="fig__frame">
+                <svg
+                  viewBox="0 0 1000 300"
+                  role="img"
+                  aria-label="A chain: the photo service calls notifications, which calls search, which calls analytics. The latencies add up to 450 milliseconds and the user waits for all of them."
+                >
+                  <g class="dg-edge">
+                    <path d="M262,148 H296" />
+                    <path d="M288,142 L298,148 L288,154" />
+                    <path d="M502,148 H536" />
+                    <path d="M494,142 L504,148 L494,154" />
+                    <path d="M742,148 H776" />
+                    <path d="M734,142 L744,148 L734,154" />
+                  </g>
+                  <text class="dg-label" x="279" y="136" text-anchor="middle">40 ms</text>
+                  <text class="dg-label" x="519" y="136" text-anchor="middle">200 ms</text>
+                  <text class="dg-label" x="759" y="136" text-anchor="middle">120 ms</text>
+
+                  <g class="dg-node">
+                    <rect class="dg-box" x="40" y="120" width="222" height="56" />
+                    <text class="dg-head" x="58" y="144">Photo service</text>
+                    <text class="dg-sub" x="58" y="162">holds the request open</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="298" y="120" width="204" height="56" />
+                    <text class="dg-head" x="316" y="144">Notifications</text>
+                    <text class="dg-sub" x="316" y="162">slow today</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="538" y="120" width="204" height="56" />
+                    <text class="dg-head" x="556" y="144">Search</text>
+                    <text class="dg-sub" x="556" y="162">waits its turn</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="778" y="120" width="182" height="56" />
+                    <text class="dg-head" x="796" y="144">Analytics</text>
+                    <text class="dg-sub" x="796" y="162">last in line</text>
+                  </g>
+
+                  <path class="dg-edge dg-edge--soft" d="M40,222 H960" />
+                  <text class="text-bad dg-sub" x="500" y="252" text-anchor="middle">
+                    the upload takes 450 ms, and analytics being down means the upload fails
+                  </text>
+                </svg>
+              </div>
+              <p class="fig__note mono muted">
+                Every link adds its latency to the user's wait, and every link can fail the whole request.
+              </p>
+            </div>
+
+            <div class="swap__panel" data-panel="after" hidden>
+              <div class="fig__frame">
+                <svg
+                  viewBox="0 0 1000 420"
+                  role="img"
+                  aria-label="A fan-out: the photo service publishes one event to a broker, and notifications, search, recommendations and analytics each consume it independently."
+                >
+                  <g class="dg-edge">
+                    <path d="M252,208 H306" />
+                    <path d="M298,202 L308,208 L298,214" />
+                    <path d="M540,208 H590 V64 H624" />
+                    <path d="M616,58 L626,64 L616,70" />
+                    <path d="M590,208 V154 H624" />
+                    <path d="M616,148 L626,154 L616,160" />
+                    <path d="M590,208 V254 H624" />
+                    <path d="M616,248 L626,254 L616,260" />
+                    <path d="M590,208 V344 H624" />
+                    <path d="M616,338 L626,344 L616,350" />
+                  </g>
+                  <text class="dg-label" x="279" y="196" text-anchor="middle">publish</text>
+
+                  <g class="dg-node">
+                    <rect class="dg-box" x="40" y="180" width="212" height="56" />
+                    <text class="dg-head" x="58" y="204">Photo service</text>
+                    <text class="dg-sub" x="58" y="222">returns as soon as it is saved</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="308" y="180" width="232" height="56" />
+                    <text class="dg-head" x="326" y="204">Broker</text>
+                    <text class="dg-sub" x="326" y="222">publish once, consume many</text>
+                  </g>
+
+                  <g class="dg-node">
+                    <rect class="dg-box" x="626" y="40" width="320" height="48" />
+                    <text class="dg-head" x="644" y="62">Notifications</text>
+                    <text class="dg-sub" x="644" y="78">tells your followers</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="626" y="130" width="320" height="48" />
+                    <text class="dg-head" x="644" y="152">Search</text>
+                    <text class="dg-sub" x="644" y="168">indexes it, maybe in a minute</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="626" y="230" width="320" height="48" />
+                    <text class="dg-head" x="644" y="252">Recommendations</text>
+                    <text class="dg-sub" x="644" y="268">learns from it, whenever</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="626" y="320" width="320" height="48" />
+                    <text class="dg-head" x="644" y="342">Analytics</text>
+                    <text class="dg-sub" x="644" y="358">counts it, nobody is waiting</text>
+                  </g>
+                </svg>
+              </div>
+              <p class="fig__note mono muted">
+                The upload is still synchronous: save the photo, return success. Everything after it is not.
+              </p>
+            </div>
+          </div>
+
+          <h2>What the fan-out actually buys</h2>
+          <p>
+            Three things, and it is worth being precise about which, because people often claim a fourth that
+            isn't true.
+          </p>
+          <ul>
+            <li>
+              <strong>Failure stops spreading.</strong> Search falling over no longer fails an upload, because
+              the upload never waited for search.
+            </li>
+            <li>
+              <strong>You scale the part that's busy.</strong> A celebrity posts and notifications get
+              hammered; you add notification consumers without touching anything else.
+            </li>
+            <li>
+              <strong>A new feature is a new listener.</strong> Adding a moderation service means subscribing
+              to an event that already exists. No pull request against the photo service.
+            </li>
+          </ul>
+          <p>
+            What it does <em>not</em> buy you is less work or fewer failures. The same five jobs still run and
+            any of them can still fail — you have just stopped making the user wait to find out.
+          </p>
+
+          <h2>The write that isn't in the picture</h2>
+          <p>
+            Look again at the fan-out diagram. The photo service does two things: it saves the photo to its
+            database, and it publishes an event to the broker. Two systems, two writes, and
+            <strong>no transaction spanning both.</strong>
+          </p>
+          <p>So what happens if the process dies between them?</p>
+
+          <div class="fig" data-swap>
+            <div class="swap" role="group" aria-label="Show the dual write or the outbox">
+              <button type="button" data-show="before" aria-pressed="true">the dual write</button>
+              <button type="button" data-show="after" aria-pressed="false">the outbox</button>
+            </div>
+
+            <div class="swap__panel" data-panel="before">
+              <div class="fig__frame">
+                <svg
+                  viewBox="0 0 1000 300"
+                  data-sequence
+                  role="img"
+                  aria-label="The dual write: the photo is committed, then the publish fails, and no consumer ever hears about the photo."
+                >
+                  <g class="dg-edge dg-edge--soft">
+                    <path d="M150,44 V272" />
+                    <path d="M500,44 V272" />
+                    <path d="M850,44 V272" />
+                  </g>
+                  <text class="dg-lane" x="150" y="26" text-anchor="middle">photo service</text>
+                  <text class="dg-lane" x="500" y="26" text-anchor="middle">database</text>
+                  <text class="dg-lane" x="850" y="26" text-anchor="middle">broker</text>
+
+                  <g data-step>
+                    <text class="dg-sub" x="325" y="76" text-anchor="middle">insert photo · commit</text>
+                    <path class="dg-edge" d="M150,88 H492" />
+                    <path class="dg-edge" d="M484,82 L494,88 L484,94" />
+                  </g>
+                  <g data-step>
+                    <text class="text-good dg-sub" x="325" y="124" text-anchor="middle">
+                      saved. the user sees success
+                    </text>
+                    <path class="dg-edge step-good" d="M500,136 H158" />
+                    <path class="dg-edge step-good" d="M166,130 L156,136 L166,142" />
+                  </g>
+                  <g data-step>
+                    <text class="text-bad dg-sub" x="500" y="184" text-anchor="middle">
+                      publish PhotoPosted — the process dies here
+                    </text>
+                    <path class="dg-edge step-bad dg-edge--soft" d="M150,196 H700" />
+                    <path class="dg-edge step-bad" d="M694,190 L706,202 M706,190 L694,202" />
+                  </g>
+                  <g data-step>
+                    <text class="text-bad dg-sub" x="500" y="252" text-anchor="middle">
+                      the photo exists. no feed, no notification, no index — and nothing retries, because
+                      nothing knows
+                    </text>
+                  </g>
+                </svg>
+              </div>
+              <p class="fig__note mono muted">
+                Publishing first instead does not help: then you can announce a photo that was never saved.
+              </p>
+            </div>
+
+            <div class="swap__panel" data-panel="after" hidden>
+              <div class="fig__frame">
+                <svg
+                  viewBox="0 0 1000 320"
+                  data-sequence
+                  role="img"
+                  aria-label="The outbox: the photo and the event are written in one transaction, and a relay publishes the event afterwards and marks it sent."
+                >
+                  <g class="dg-edge dg-edge--soft">
+                    <path d="M130,44 V292" />
+                    <path d="M420,44 V292" />
+                    <path d="M690,44 V292" />
+                    <path d="M910,44 V292" />
+                  </g>
+                  <text class="dg-lane" x="130" y="26" text-anchor="middle">photo service</text>
+                  <text class="dg-lane" x="420" y="26" text-anchor="middle">database</text>
+                  <text class="dg-lane" x="690" y="26" text-anchor="middle">relay</text>
+                  <text class="dg-lane" x="910" y="26" text-anchor="middle">broker</text>
+
+                  <g data-step>
+                    <text class="text-good dg-sub" x="275" y="76" text-anchor="middle">
+                      one transaction: insert photo + insert outbox row
+                    </text>
+                    <path class="dg-edge step-good" d="M130,88 H412" />
+                    <path class="dg-edge step-good" d="M404,82 L414,88 L404,94" />
+                  </g>
+                  <g data-step>
+                    <text class="dg-sub" x="275" y="124" text-anchor="middle">
+                      commit · the user sees success
+                    </text>
+                    <path class="dg-edge" d="M420,136 H138" />
+                    <path class="dg-edge" d="M146,130 L136,136 L146,142" />
+                  </g>
+                  <g data-step>
+                    <text class="dg-sub" x="555" y="184" text-anchor="middle">read unsent rows</text>
+                    <path class="dg-edge" d="M690,196 H428" />
+                    <path class="dg-edge" d="M436,190 L426,196 L436,202" />
+                  </g>
+                  <g data-step>
+                    <text class="dg-sub" x="800" y="228" text-anchor="middle">publish</text>
+                    <path class="dg-edge" d="M690,240 H902" />
+                    <path class="dg-edge" d="M894,234 L904,240 L894,246" />
+                  </g>
+                  <g data-step>
+                    <text class="text-good dg-sub" x="500" y="288" text-anchor="middle">
+                      then mark it sent. if the relay dies first, the row is still there and the next pass
+                      publishes it
+                    </text>
+                  </g>
+                </svg>
+              </div>
+              <p class="fig__note mono muted">
+                The event is now as durable as the photo, because it is stored by the same commit.
+              </p>
+            </div>
+          </div>
+
+          <p>
+            This is the <strong>outbox pattern</strong>, and it is the single most useful thing to know about
+            event-driven systems. The event goes into an ordinary table in the same database, inside the same
+            transaction as the business write:
+          </p>
+
+          <pre><code><span class="k">begin</span>;
+
+<span class="k">insert into</span> photos (id, user_id, url)
+<span class="k">values</span> ($1, $2, $3);
+
+<span class="k">insert into</span> outbox (id, topic, payload)
+<span class="k">values</span> ($4, <span class="c">'photo.posted'</span>, $5);
+
+<span class="k">commit</span>;   <span class="c">-- both, or neither</span></code></pre>
+
+          <p>
+            A separate relay then reads unsent rows, publishes them, and marks them sent. Every failure now
+            has an answer. The relay crashes before publishing? The row is unsent; it goes next pass. It
+            publishes but dies before marking sent? It publishes again — which is fine, because of the next
+            section.
+          </p>
+
+          <div class="callout">
+            If you take one thing from this: you cannot write to a database and a broker atomically, so stop
+            trying. Write to one, and let something else move it to the other.
+          </div>
+
+          <h2>Delivered at least once, which means twice</h2>
+          <p>
+            Brokers promise <strong>at-least-once</strong> delivery. Exactly-once is sold hard and is mostly a
+            careful arrangement of at-least-once plus deduplication; treating it as a primitive will hurt you.
+            So assume every consumer will see some events twice, and make that boring rather than dangerous.
+          </p>
+          <p>
+            The trick is that the consumer records what it has already done, keyed by the event's id, in the
+            same transaction as its own work:
+          </p>
+
+          <pre><code><span class="c">-- in the notification service's own database</span>
+<span class="k">insert into</span> handled (event_id)
+<span class="k">values</span> ($1)
+<span class="k">on conflict</span> (event_id) <span class="k">do nothing</span>;
+
+<span class="c">-- 0 rows means we have seen this one before: stop here,</span>
+<span class="c">-- ack the message, and send nothing.</span></code></pre>
+
+          <p>
+            Note where that table lives: in the <em>consumer's</em> database, not the producer's. Each
+            consumer is responsible for its own duplicates, because each one has a different idea of what
+            "already done" means. Sending a push notification twice is bad. Incrementing an analytics counter
+            twice is bad. Setting a search index entry twice is harmless, so search may not need the table at
+            all.
+          </p>
+
+          <h2>Order holds only where you ask for it</h2>
+          <p>
+            A broker gives you ordering within a partition, not across a topic. If
+            <code>photo.posted</code> and <code>photo.deleted</code> for the same photo land on different
+            partitions, a consumer can be told about the deletion first and then re-create what it just
+            removed.
+          </p>
+          <p>
+            The fix is to partition by the thing whose order matters — the photo id, or the user id — so every
+            event about one entity travels the same lane. It costs you something real: one hot key, say a
+            celebrity account, now has a single consumer working through it while others idle.
+          </p>
+          <p>
+            Ordering problems are rarely about the broker. I hit the same shape of bug in
+            <a class="u" href="/work/99ile/">a sync protocol I built</a>, where Postgres handed out sequence
+            numbers before the transactions committed, so two writes became visible out of order and a client
+            stepped straight past one. Different system, identical lesson:
+            <strong>a number you were given is not a promise about when anyone else will see it.</strong>
+          </p>
+
+          <h2>What it costs</h2>
+          <ul>
+            <li>
+              <strong>Eventual consistency, out loud.</strong> The photo is up before the follower count
+              moves. That is a product decision as much as a technical one, and someone has to decide what the
+              UI shows in the gap.
+            </li>
+            <li>
+              <strong>Debugging becomes tracing.</strong> There is no single stack to read. Without a
+              correlation id carried on every event and logged by every consumer, "it didn't show up" is close
+              to unanswerable.
+            </li>
+            <li>
+              <strong>The broker is now critical infrastructure.</strong> You have swapped several direct
+              dependencies for one shared one that needs its own monitoring, retention policy and dead-letter
+              handling.
+            </li>
+            <li>
+              <strong>Schemas get harder.</strong> Five consumers read your event, you do not know who, and
+              renaming a field breaks them silently. Events need versioning in a way function arguments don't.
+            </li>
+          </ul>
+
+          <h2>When not to reach for it</h2>
+          <p>
+            If the caller needs the answer, this is the wrong tool. A payment authorisation, a login, a
+            uniqueness check at sign-up — these are synchronous by nature, and routing them through a broker
+            just means reinventing request and response with worse tooling.
+          </p>
+          <p>
+            The honest test is the one the fan-out diagram is really showing:
+            <strong>does the user need this to have happened before they see success?</strong> If yes, call
+            it. If no, publish an event and let it happen when it happens.
+          </p>
+
+          <div class="post-foot">
+            <p>
+              Two of the ideas here show up in the projects on this site: the ordering bug in the
+              <a class="u" href="/work/99ile/">99ile sync protocol</a>, and the question of what to write
+              before you commit to anything in the
+              <a class="u" href="/work/local-llm-gateway/">Local LLM Gateway</a>. If you have hit a variant of
+              either, I would like to hear about it.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <div class="case__end mono">
+        <a class="u" href="/writing/" data-magnetic>← writing</a>
+        <span class="links">
+          <a href="/writing/vcluster-on-eks/" data-magnetic>vCluster on EKS →</a>
+          <a href="/work/99ile/" data-magnetic>99ile →</a>
+          <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+        </span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/post.ts"></script>
+  </body>
+</html>

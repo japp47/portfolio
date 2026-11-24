@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>How credit cards catch typos: the Luhn algorithm — Jappreet Singh Chhabra</title>
+    <meta
+      name="description"
+      content="How the Luhn check digit catches typos in card numbers before anything reaches a server: the anatomy of a card number, the four steps, exactly which mistakes it catches and misses, and where it fits next to a payment API."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href="https://jappreet.netlify.app/writing/luhn-check-digit/" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Jappreet Singh Chhabra" />
+    <meta property="og:url" content="https://jappreet.netlify.app/writing/luhn-check-digit/" />
+    <meta property="og:title" content="How credit cards catch typos: the Luhn algorithm" />
+    <meta
+      property="og:description"
+      content="Every card number ends in a digit whose only job is to catch your mistakes."
+    />
+    <meta property="og:image" content="https://jappreet.netlify.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://jappreet.netlify.app/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/writing/" data-magnetic>writing</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+        <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="case" id="top">
+      <article>
+        <header class="post-head">
+          <div class="case__top mono">
+            <a class="case__back" href="/writing/" data-magnetic>← writing</a>
+          </div>
+
+          <p class="case__eyebrow mono">payments</p>
+          <h1>How credit cards catch typos: the Luhn algorithm</h1>
+          <p class="case__tag">
+            Every card number ends in a digit whose only job is to catch your mistakes.
+            <em>Here is how it works, and what it misses.</em>
+          </p>
+
+          <p class="post-meta mono">
+            <time datetime="2026-02-13">13 Feb 2026</time>
+            <span>·</span>
+            <span>8 min</span>
+            <span>·</span>
+            <span>payments · algorithms · interactive</span>
+          </p>
+        </header>
+
+        <div class="post-body">
+          <p class="lede">
+            Ever wondered how a payment form knows you typed your card number wrong before anything reaches a
+            server? There is a 70-year-old algorithm hidden in every card number, and it runs in your browser
+            in a few microseconds.
+          </p>
+          <p>
+            Here is how it works, what it catches, what it doesn't, and why it matters for a payment
+            integration.
+          </p>
+
+          <h2>The anatomy of a card number</h2>
+          <p>Take this Mastercard test number. It isn't random; every part has a job.</p>
+
+          <figure class="anatomy" data-reveal>
+            <div class="anatomy__part">
+              <span class="anatomy__digits mono">5425 2334</span>
+              <span class="anatomy__label">
+                <b>Issuer (BIN)</b> The first 6 to 8 digits name the bank. The very first one names the
+                network: 4 is Visa, 5 Mastercard, 3 Amex.
+              </span>
+            </div>
+            <div class="anatomy__part">
+              <span class="anatomy__digits mono">3010 990</span>
+              <span class="anatomy__label"><b>Account</b> Your account at that bank.</span>
+            </div>
+            <div class="anatomy__part is-check">
+              <span class="anatomy__digits mono">3</span>
+              <span class="anatomy__label"><b>Check digit</b> Chosen so the whole number passes Luhn.</span>
+            </div>
+          </figure>
+
+          <p>
+            The last digit carries no information about you at all. It is there purely so that a mistake in
+            any of the others can be spotted.
+          </p>
+
+          <h2>How the Luhn algorithm works</h2>
+          <p>Hans Peter Luhn, a scientist at IBM, filed the patent in 1954. The whole thing is four steps:</p>
+          <ol>
+            <li>Remove spaces and dashes, keep the digits.</li>
+            <li>Starting from the right, double every second digit.</li>
+            <li>If doubling gives a number above 9, subtract 9. (14 becomes 5, the same as 1 + 4.)</li>
+            <li>Add everything up. If the total ends in 0, the number is valid.</li>
+          </ol>
+          <p>Try it below. Each box shows a digit, whether it was doubled, and what it adds to the total.</p>
+
+          <figure class="luhn" data-luhn>
+            <input
+              type="text"
+              inputmode="numeric"
+              value="5425 2334 3010 9903"
+              aria-label="A card number"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <div class="luhn__row">
+              <span>test numbers</span>
+              <button type="button" class="planner__toggle" data-number="5425233430109903">mastercard</button>
+              <button type="button" class="planner__toggle" data-number="4111111111111111">visa</button>
+              <button type="button" class="planner__toggle" data-number="378282246310005">amex</button>
+            </div>
+
+            <div class="luhn__digits" aria-label="Each digit, its weight, and what it adds"></div>
+            <p class="luhn__sum" data-out="sum"></p>
+
+            <div class="luhn__row">
+              <span>make a typo</span>
+              <button type="button" class="planner__toggle" data-typo="change">one digit wrong</button>
+              <button type="button" class="planner__toggle" data-typo="swap">swap two neighbours</button>
+              <button type="button" class="planner__toggle" data-typo="jump">swap across one</button>
+              <button type="button" class="planner__toggle" data-typo="zero-nine">swap a 0 and a 9</button>
+              <button type="button" class="planner__toggle" data-reset>↺ undo</button>
+            </div>
+            <p class="luhn__verdict" data-out="verdict" aria-live="polite"></p>
+          </figure>
+
+          <h2>Why the doubling trick works</h2>
+          <p>
+            Doubling-and-subtracting-9 turns the digits 0 to 9 into 0, 2, 4, 6, 8, 1, 3, 5, 7, 9: every digit
+            still, just shuffled. So changing any one digit, doubled or not, moves the total by somewhere
+            between 1 and 9. That can never land on another multiple of 10, which is why a single wrong digit
+            is
+            <strong>always</strong> caught.
+          </p>
+          <p>
+            Swapping two neighbours usually changes the total too, because one of them was doubled and the
+            other wasn't. 13 ↔ 31 and 56 ↔ 65 are both caught. The one exception is 09 ↔ 90: 0 doubled is 0, 9
+            doubled is 18 → 9, so the pair adds 9 whichever way round it is.
+          </p>
+          <p>
+            I didn't want to repeat the percentages that float around, so I measured them: 3,000 random valid
+            16-digit numbers, and every possible typo of each kind.
+          </p>
+
+          <div class="table-wrap methods" data-reveal>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">typo</th>
+                  <th scope="col">example</th>
+                  <th scope="col">Luhn catches</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>One digit wrong</td>
+                  <td>5425 → 5465</td>
+                  <td>100%, always</td>
+                </tr>
+                <tr>
+                  <td>Neighbours swapped</td>
+                  <td>13 → 31</td>
+                  <td>98%; only 09 ↔ 90 slips through</td>
+                </tr>
+                <tr>
+                  <td>Twin digits wrong</td>
+                  <td>11 → 55</td>
+                  <td>93%; misses 22 ↔ 55, 33 ↔ 66, 44 ↔ 77</td>
+                </tr>
+                <tr>
+                  <td>Swap across one</td>
+                  <td>123 → 321</td>
+                  <td>0%, never</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            That last row is the blind spot most write-ups get wrong. Digits two apart are either both doubled
+            or both not, so swapping them can't change the total. Luhn misses every one of those.
+          </p>
+          <p>
+            Better schemes exist (Verhoeff and Damm also use a single check digit and catch every neighbour
+            swap), but nobody switched. Luhn is written into the card standard and into every card already in
+            a wallet. Once a format is everywhere, "good enough and universal" beats "better and new".
+          </p>
+
+          <h2>A production-ready check</h2>
+          <p>In a real form, Luhn is one part of a short function:</p>
+          <pre><code><span class="k">function</span> luhnSum(digits: string): number {
+  <span class="k">let</span> sum = 0;
+  <span class="k">for</span> (<span class="k">let</span> i = 0; i &lt; digits.length; i++) {
+    <span class="k">let</span> d = Number(digits[digits.length - 1 - i]);  <span class="c">// walk from the right</span>
+    <span class="k">if</span> (i % 2 === 1) {
+      d *= 2;
+      <span class="k">if</span> (d &gt; 9) d -= 9;
+    }
+    sum += d;
+  }
+  <span class="k">return</span> sum;
+}
+
+<span class="k">function</span> checkCard(input: string) {
+  <span class="k">const</span> digits = input.replace(/\D/g, '');             <span class="c">// strip spaces and dashes</span>
+  <span class="k">if</span> (digits.length &lt; 13 || digits.length &gt; 19) <span class="k">return</span> { ok: false, reason: 'length' };
+  <span class="k">if</span> (luhnSum(digits) % 10 !== 0) <span class="k">return</span> { ok: false, reason: 'typo' };
+  <span class="k">return</span> { ok: true, last4: digits.slice(-4) };         <span class="c">// only ever show or log these</span>
+}</code></pre>
+          <ul>
+            <li><strong>Strip non-digits</strong> so people can paste numbers with spaces or dashes.</li>
+            <li><strong>Check the length:</strong> card numbers are 13 to 19 digits.</li>
+            <li>
+              <strong>Show only the last four</strong> once it's entered, and never log the full number.
+            </li>
+            <li>
+              <strong>Use brand detection for the logo, not to reject.</strong> Ranges change: Mastercard
+              added a whole new 2-series in 2017, and issuer prefixes grew from 6 to 8 digits in 2022. A form
+              that refuses numbers it doesn't recognise turns away real customers.
+            </li>
+          </ul>
+          <p>It runs in linear time, in microseconds, with no dependencies.</p>
+
+          <h2>Generating valid test numbers</h2>
+          <p>
+            Because the last digit is just arithmetic, you can make any number pass: pick the first 15 digits,
+            then compute the 16th.
+          </p>
+          <pre><code><span class="k">function</span> checkDigit(body: string): number {
+  <span class="c">// pretend the check digit is 0, then see how far the total is from a multiple of 10</span>
+  <span class="k">return</span> (10 - (luhnSum(body + '0') % 10)) % 10;
+}
+
+checkDigit('411111111111111');  <span class="c">// 1  →  4111 1111 1111 1111</span></code></pre>
+          <p>
+            That is handy for UI tests and automation without touching real card data. For a payment gateway's
+            sandbox, use the provider's own published test numbers instead; a generated number passes Luhn,
+            but the sandbox only recognises its own.
+          </p>
+
+          <h2>What Luhn doesn't validate</h2>
+          <p>Luhn tells you a number was probably typed correctly. That's all.</p>
+          <div class="table-wrap methods" data-reveal>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">it does</th>
+                  <th scope="col">it doesn't</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Catch accidental typos</td>
+                  <td>Check that the card exists</td>
+                </tr>
+                <tr>
+                  <td>Catch every single-digit error</td>
+                  <td>Check that it's active or not expired</td>
+                </tr>
+                <tr>
+                  <td>Work offline, with no API call</td>
+                  <td>Check the CVV or billing address</td>
+                </tr>
+                <tr>
+                  <td>Run instantly</td>
+                  <td>Stop fraud of any kind</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Think of Luhn as the first line of defence, not the only one.</p>
+
+          <h2>Luhn or the payment API?</h2>
+          <p>Both, at different steps. Each step of a payment knows more, and costs more to ask:</p>
+
+          <div class="fig">
+            <div class="fig__frame">
+              <svg
+                viewBox="0 0 1000 200"
+                data-sequence
+                role="img"
+                aria-label="A card number passes from the browser, which checks the format and Luhn, to your server, the payment provider, the card network and finally the issuer, which is the only party that knows whether the card is real and funded."
+              >
+                <g class="dg-edge">
+                  <path d="M192,100 H214" />
+                  <path d="M206,94 L216,100 L206,106" />
+                  <path d="M389,100 H411" />
+                  <path d="M403,94 L413,100 L403,106" />
+                  <path d="M586,100 H608" />
+                  <path d="M600,94 L610,100 L600,106" />
+                  <path d="M783,100 H805" />
+                  <path d="M797,94 L807,100 L797,106" />
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="20" y="58" width="172" height="86" style="stroke: var(--fg)" />
+                  <text class="dg-head" x="36" y="86">Browser</text>
+                  <text class="dg-sub" x="36" y="108">length + Luhn</text>
+                  <text class="dg-sub" x="36" y="126">catches typos</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="217" y="58" width="172" height="86" />
+                  <text class="dg-head" x="233" y="86">Your server</text>
+                  <text class="dg-sub" x="233" y="108">with hosted fields,</text>
+                  <text class="dg-sub" x="233" y="126">never sees it</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="414" y="58" width="172" height="86" />
+                  <text class="dg-head" x="430" y="86">Payment provider</text>
+                  <text class="dg-sub" x="430" y="108">tokenises it</text>
+                  <text class="dg-sub" x="430" y="126">CVV, fraud rules</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="611" y="58" width="172" height="86" />
+                  <text class="dg-head" x="627" y="86">Card network</text>
+                  <text class="dg-sub" x="627" y="108">routes on the</text>
+                  <text class="dg-sub" x="627" y="126">first 6–8 digits</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="808" y="58" width="172" height="86" />
+                  <text class="dg-head" x="824" y="86">Issuer</text>
+                  <text class="dg-sub" x="824" y="108">real, open, funded,</text>
+                  <text class="dg-sub" x="824" y="126">not stolen?</text>
+                </g>
+                <text class="dg-lane" x="20" y="36">each step knows more, and costs more to ask</text>
+                <text class="dg-label" x="106" y="176" text-anchor="middle">microseconds, free</text>
+                <text class="dg-label" x="894" y="176" text-anchor="middle">a network round trip</text>
+              </svg>
+            </div>
+          </div>
+
+          <ul>
+            <li>
+              <strong>Use Luhn in the browser</strong> for instant feedback while the person is still typing.
+            </li>
+            <li>
+              <strong>Use the payment API</strong> to actually charge the card, check the CVV and address, and
+              run fraud checks. Only the issuer knows whether the card is real.
+            </li>
+            <li>
+              <strong>Best of both:</strong> Luhn on the front end, the processor's validation behind it. With
+              the provider's hosted card fields, the number goes from the browser straight to them, and your
+              servers only ever see a token, which also keeps them out of most of the PCI DSS scope.
+            </li>
+          </ul>
+
+          <h2>Real-world impact</h2>
+          <ul>
+            <li>
+              <strong>Better experience.</strong> The mistake is flagged while the person is still typing.
+            </li>
+            <li>
+              <strong>Fewer wasted calls.</strong> A rough example: 10,000 payment attempts a month, 5% with a
+              typo, is 500 calls that could only ever be declined. At $0.10 each that's $50 a month, before
+              counting the support tickets.
+            </li>
+            <li>
+              <strong>Cleaner signals.</strong> Fewer pointless declines means less noise for the fraud
+              systems watching your traffic.
+            </li>
+          </ul>
+
+          <div class="callout">
+            The bottom line: a 70-year-old checksum, about 15 lines of code, that still checks every card
+            number typed into every checkout. Fast, free, no dependencies. Just know which mistakes it can't
+            see.
+          </div>
+
+          <div class="post-foot">
+            <p>
+              I built a step-by-step version of this as a standalone page:
+              <a class="u" href="https://japp47.github.io/LUHN/" target="_blank" rel="noopener"
+                >try the live validator ↗</a
+              >
+              or read
+              <a class="u" href="https://github.com/japp47/LUHN" target="_blank" rel="noopener"
+                >its source ↗</a
+              >. Vanilla HTML, CSS and JavaScript, no dependencies. And a fun fact to end on: Luhn also
+              invented KWIC (key word in context) indexing, one of the first ways to have a computer index
+              documents automatically.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <div class="case__end mono">
+        <a class="u" href="/writing/" data-magnetic>← writing</a>
+        <span class="links">
+          <a href="/writing/cache-failure-modes/" data-magnetic>caching →</a>
+          <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+        </span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/post.ts"></script>
+  </body>
+</html>

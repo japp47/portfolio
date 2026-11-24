@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>What the Postgres planner is actually deciding — Jappreet Singh Chhabra</title>
+    <meta
+      name="description"
+      content="Postgres prices every way to run your query and picks the cheapest. How the cost model works, why an index isn't always faster, and how one stale estimate turns 12 lookups into 48,210 — with an interactive planner to play with."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href="https://jappreet.netlify.app/writing/postgres-query-planner/" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Jappreet Singh Chhabra" />
+    <meta property="og:url" content="https://jappreet.netlify.app/writing/postgres-query-planner/" />
+    <meta property="og:title" content="What the Postgres planner is actually deciding" />
+    <meta
+      property="og:description"
+      content="It doesn't run your SQL. It prices every way it could, and runs the cheapest one it can see."
+    />
+    <meta property="og:image" content="https://jappreet.netlify.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://jappreet.netlify.app/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/writing/" data-magnetic>writing</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+        <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="case" id="top">
+      <article>
+        <header class="post-head">
+          <div class="case__top mono">
+            <a class="case__back" href="/writing/" data-magnetic>← writing</a>
+          </div>
+
+          <p class="case__eyebrow mono">databases</p>
+          <h1>What the Postgres planner is actually deciding</h1>
+          <p class="case__tag">
+            It doesn't run your SQL.
+            <em>It prices every way it could, and runs the cheapest one it can see.</em>
+          </p>
+
+          <p class="post-meta mono">
+            <time datetime="2026-08-18">18 Aug 2026</time>
+            <span>·</span>
+            <span>11 min</span>
+            <span>·</span>
+            <span>postgres · performance · interactive</span>
+          </p>
+        </header>
+
+        <div class="post-body">
+          <p class="lede">
+            The same query takes four milliseconds on Monday and forty seconds on Friday. Nobody changed the
+            SQL. Nobody dropped an index. What changed is the plan — and the plan is a decision PostgreSQL
+            makes fresh, every time, from numbers that can quietly go stale.
+          </p>
+          <p>
+            SQL says what you want, never how to get it. Between your query and your data sits the planner,
+            and most "Postgres is slow" stories are really stories about what it decided and why.
+          </p>
+
+          <h2>From text to rows</h2>
+          <p>Every query passes through four stages. Only one of them makes choices.</p>
+
+          <div class="fig">
+            <div class="fig__frame">
+              <svg
+                viewBox="0 0 1000 190"
+                data-sequence
+                role="img"
+                aria-label="A query passes through the parser, the rewriter, the planner and the executor. Only the planner chooses between alternatives."
+              >
+                <g class="dg-edge">
+                  <path d="M230,95 H262" />
+                  <path d="M254,89 L264,95 L254,101" />
+                  <path d="M480,95 H512" />
+                  <path d="M504,89 L514,95 L504,101" />
+                  <path d="M730,95 H762" />
+                  <path d="M754,89 L764,95 L754,101" />
+                </g>
+
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="20" y="48" width="210" height="94" />
+                  <text class="dg-head" x="38" y="78">Parser</text>
+                  <text class="dg-sub" x="38" y="102">text → parse tree</text>
+                  <text class="dg-sub" x="38" y="122">is this valid SQL?</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="270" y="48" width="210" height="94" />
+                  <text class="dg-head" x="288" y="78">Rewriter</text>
+                  <text class="dg-sub" x="288" y="102">views → real tables</text>
+                  <text class="dg-sub" x="288" y="122">applies rules</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="520" y="48" width="210" height="94" style="stroke: var(--fg)" />
+                  <text class="dg-head" x="538" y="78">Planner</text>
+                  <text class="dg-sub" x="538" y="102">many plans → one</text>
+                  <text class="dg-sub" x="538" y="122">priced; cheapest wins</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="770" y="48" width="210" height="94" />
+                  <text class="dg-head" x="788" y="78">Executor</text>
+                  <text class="dg-sub" x="788" y="102">runs the plan</text>
+                  <text class="dg-sub" x="788" y="122">rows flow up a tree</text>
+                </g>
+                <text class="dg-lane" x="520" y="34">the only stage with a choice</text>
+              </svg>
+            </div>
+            <p class="fig__note mono muted">
+              EXPLAIN shows you the planner's answer. EXPLAIN ANALYZE also runs the executor and shows how
+              that answer turned out.
+            </p>
+          </div>
+
+          <h2>What it is choosing between</h2>
+          <p>
+            For every table, a way to read it. For every join, a method and an order. The options multiply
+            quickly — past twelve tables in one query (<code>geqo_threshold</code>), Postgres stops searching
+            exhaustively and switches to a genetic search.
+          </p>
+
+          <div class="table-wrap methods" data-reveal>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">reading a table</th>
+                  <th scope="col">how it works</th>
+                  <th scope="col">wins when</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Seq Scan</td>
+                  <td>Read every page in order, check every row</td>
+                  <td>A large share of the table matches</td>
+                </tr>
+                <tr>
+                  <td>Index Scan</td>
+                  <td>Walk the index, then fetch each matching row from the table</td>
+                  <td>Few rows match, or rows sit in index order</td>
+                </tr>
+                <tr>
+                  <td>Index Only Scan</td>
+                  <td>Answer from the index alone, never touching the table</td>
+                  <td>The index has every column the query needs</td>
+                </tr>
+                <tr>
+                  <td>Bitmap Heap Scan</td>
+                  <td>Collect matches from the index, sort them by page, read each page once</td>
+                  <td>The middle ground, or combining two indexes with AND / OR</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-wrap methods" data-reveal>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">joining two</th>
+                  <th scope="col">how it works</th>
+                  <th scope="col">wins when</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Nested Loop</td>
+                  <td>For each row on one side, look up its matches on the other</td>
+                  <td>One side is small and the other has an index</td>
+                </tr>
+                <tr>
+                  <td>Hash Join</td>
+                  <td>Build a hash table from one side, probe it with the other</td>
+                  <td>Big, unsorted inputs joined on equality</td>
+                </tr>
+                <tr>
+                  <td>Merge Join</td>
+                  <td>Walk two sorted inputs side by side</td>
+                  <td>Both sides are already sorted, often by an index</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Cost is arithmetic</h2>
+          <p>
+            Each candidate plan gets a cost: a number in made-up units where reading one page in sequence
+            costs 1. The prices live in <code>postgresql.conf</code>:
+          </p>
+
+          <pre><code><span class="k">seq_page_cost</span>        = 1.0     <span class="c"># read the next page</span>
+<span class="k">random_page_cost</span>     = 4.0     <span class="c"># jump to some other page</span>
+<span class="k">cpu_tuple_cost</span>       = 0.01    <span class="c"># handle one row</span>
+<span class="k">cpu_index_tuple_cost</span> = 0.005   <span class="c"># handle one index entry</span>
+<span class="k">cpu_operator_cost</span>    = 0.0025  <span class="c"># evaluate one operator, like >=</span></code></pre>
+
+          <p>Price a sequential scan of a million-row table stored on 10,000 pages:</p>
+
+          <pre><code>10,000 pages      × 1.0     = 10,000
+1,000,000 rows    × 0.01    = 10,000
+1,000,000 checks  × 0.0025  =  2,500
+                              ------
+                              <mark>22,500</mark>   <span class="c"># EXPLAIN prints cost=0.00..22500.00</span></code></pre>
+
+          <p>
+            An index scan pays <code>random_page_cost</code> for nearly every row it fetches, because each one
+            can live on a different page. That makes it very cheap for ten rows and very expensive for half
+            the table. Somewhere in between, the lines cross.
+          </p>
+
+          <div class="callout">
+            <code>random_page_cost = 4</code> was set for spinning disks. On SSDs many teams lower it toward
+            1.1, which makes index scans look cheaper and moves every crossover.
+          </div>
+
+          <h2>Play the planner</h2>
+          <p>
+            Here is that cost model, simplified, for
+            <code>SELECT * FROM orders WHERE created_at &gt;= $1</code> on the same million-row table, with an
+            index on <code>created_at</code>. Drag the slider, or the chart itself, to change how many rows
+            the planner expects to match.
+          </p>
+
+          <figure class="planner" data-planner>
+            <ul class="planner__legend" aria-label="Legend">
+              <li data-plan="Seq Scan">
+                <svg viewBox="0 0 26 6" aria-hidden="true">
+                  <path class="pl-line pl-seq is-chosen" d="M0,3H26" /></svg
+                >Seq Scan
+              </li>
+              <li data-plan="Index Scan">
+                <svg viewBox="0 0 26 6" aria-hidden="true">
+                  <path class="pl-line pl-index is-chosen" d="M0,3H26" /></svg
+                >Index Scan
+              </li>
+              <li data-plan="Bitmap Heap Scan">
+                <svg viewBox="0 0 26 6" aria-hidden="true">
+                  <path class="pl-line pl-bitmap is-chosen" d="M0,3H26" /></svg
+                >Bitmap Heap Scan
+              </li>
+            </ul>
+
+            <div class="planner__chart"></div>
+
+            <div class="planner__controls">
+              <label class="planner__range">
+                <span>rows the planner expects</span>
+                <output data-out="estimated">1,000 rows</output>
+                <input type="range" min="0" max="600" step="1" value="300" data-in="estimated" />
+              </label>
+              <label class="planner__range is-off" data-actual-row>
+                <span>rows that actually match</span>
+                <output data-out="actual">same</output>
+                <input type="range" min="0" max="600" step="1" value="300" data-in="actual" disabled />
+              </label>
+              <div class="planner__toggles">
+                <button type="button" class="planner__toggle" data-toggle="stale" aria-pressed="false">
+                  statistics are stale
+                </button>
+                <button type="button" class="planner__toggle" data-toggle="sorted" aria-pressed="false">
+                  table stored in date order
+                </button>
+              </div>
+            </div>
+
+            <pre><code data-out="plan"></code></pre>
+            <p class="planner__verdict" data-out="verdict" aria-live="polite"></p>
+          </figure>
+
+          <p>Three things worth noticing:</p>
+          <ul>
+            <li>
+              <strong>An index is not always faster.</strong> Past a point, jumping around the table one row
+              at a time costs more than reading all of it in order. When the planner ignores your index on a
+              broad query, it is usually right.
+            </li>
+            <li>
+              <strong>Bitmap scans are the compromise.</strong> They use the index to find rows but read pages
+              in physical order, which is why they show up so often on mid-sized results.
+            </li>
+            <li>
+              <strong>Physical order changes everything.</strong> Switch on
+              <em>table stored in date order</em>. In an append-only table, rows arrive in
+              <code>created_at</code> order, so the index and the table agree and an index scan stays cheap
+              far longer. The same index on <code>customer_id</code>, scattered everywhere, gives up much
+              sooner.
+            </li>
+          </ul>
+
+          <h2>The estimate is the weak link</h2>
+          <p>
+            Every cost above multiplies by one input: how many rows will match. The planner can't count them
+            without running the query, so it estimates them from statistics that <code>ANALYZE</code> gathers
+            for each column — the share of nulls, the number of distinct values, the most common values and
+            their frequencies, a histogram of the rest, and how closely the column follows the table's
+            physical order.
+          </p>
+
+          <pre><code><span class="k">SELECT</span> null_frac, n_distinct, most_common_vals, most_common_freqs, correlation
+<span class="k">FROM</span> pg_stats
+<span class="k">WHERE</span> tablename = 'orders' <span class="k">AND</span> attname = 'status';</code></pre>
+
+          <p>
+            <code>ANALYZE</code> reads a sample of 300 × <code>default_statistics_target</code> rows — 30,000
+            by default — however large the table. Autovacuum re-runs it once 50 rows plus 10% of the table
+            have changed. On a hundred-million-row table, that is ten million changes before the statistics
+            catch up.
+          </p>
+          <p>
+            Now turn on <em>statistics are stale</em> in the demo above. The planner believes 10 rows will
+            match and picks an index scan; 300,000 do. On a single table that costs a few times the work. In a
+            join, it compounds.
+          </p>
+
+          <h2>Reading EXPLAIN ANALYZE</h2>
+          <p>
+            A queue: orders go from <code>pending</code> to <code>done</code>. When statistics were last
+            gathered, <code>pending</code> was rare. Then a downstream service was down for an afternoon, and
+            the backlog grew:
+          </p>
+
+          <pre><code><span class="k">EXPLAIN (ANALYZE, BUFFERS)</span>
+<span class="k">SELECT</span> o.id, c.email <span class="k">FROM</span> orders o <span class="k">JOIN</span> customers c <span class="k">ON</span> c.id = o.customer_id
+<span class="k">WHERE</span> o.status = 'pending';
+
+Nested Loop  (cost=0.85..152.40 rows=12 width=40) (actual time=0.061..2841.772 rows=48210 loops=1)
+  Buffers: shared hit=193020 read=41877
+  ->  Index Scan using orders_status_idx on orders o  (cost=0.42..48.10 <span class="flag">rows=12</span> width=16)
+        (actual time=0.031..61.204 <span class="flag">rows=48210</span> loops=1)
+        Index Cond: (status = 'pending'::text)
+  ->  Index Scan using customers_pkey on customers c  (cost=0.42..8.44 rows=1 width=32)
+        (actual time=0.052..0.055 rows=1 <span class="flag">loops=48210</span>)
+        Index Cond: (id = o.customer_id)</code></pre>
+          <p class="fig__note mono muted">An illustrative plan, wrapped and trimmed for reading.</p>
+
+          <p>
+            Read it from the innermost lines out, comparing <code>rows=</code> with
+            <code>actual rows=</code> on each:
+          </p>
+          <ol>
+            <li>
+              <strong>The orders scan expected 12 rows and got 48,210</strong> — four thousand times off. It
+              is the first line where estimate and reality part ways, so it is where the plan went wrong.
+            </li>
+            <li>
+              <strong>For 12 rows, a nested loop was the right call:</strong> twelve primary-key lookups. For
+              48,210 it means 48,210 separate lookups, which is what <code>loops=48210</code> on the customers
+              scan says. A hash join would have read customers once.
+            </li>
+            <li>
+              <strong>Numbers on a looped line are per loop.</strong> 0.055 ms looks harmless until you
+              multiply it by 48,210.
+            </li>
+            <li>
+              <strong>Everything above the first bad estimate is built on it.</strong> Don't tune the join.
+              Fix the number.
+            </li>
+          </ol>
+
+          <p>
+            Here the immediate fix is <code>ANALYZE orders;</code>. The lasting one is making sure it runs
+            often enough on a table whose shape changes by the hour:
+          </p>
+          <pre><code><span class="k">ALTER TABLE</span> orders <span class="k">SET</span> (autovacuum_analyze_scale_factor = 0.01);  <span class="c">-- 1%, not 10%</span></code></pre>
+          <p>
+            And <code>BUFFERS</code> says where the time went: <code>shared hit</code> pages came from
+            Postgres's own cache, <code>read</code> pages had to come from the operating system or the disk.
+            Since PostgreSQL 18, <code>EXPLAIN ANALYZE</code> includes it by default.
+          </p>
+
+          <h2>Design so the planner can win</h2>
+          <p>
+            Postgres has no built-in query hints. (The <code>pg_hint_plan</code> extension adds them, at the
+            price of maintaining plans by hand.) What you can do is give the planner true numbers and good
+            options:
+          </p>
+          <ul>
+            <li>
+              <strong>Keep statistics honest.</strong> Run <code>ANALYZE</code> after bulk loads and large
+              deletes. Lower the analyze scale factor on big tables that change fast, and raise the statistics
+              target on skewed columns:
+              <code>ALTER TABLE orders ALTER COLUMN status SET STATISTICS 1000;</code>
+            </li>
+            <li>
+              <strong>Tell it which columns move together.</strong> The planner assumes conditions are
+              independent, so <code>city = 'Bengaluru' AND state = 'Karnataka'</code> multiplies two
+              selectivities and underestimates badly.
+              <code>CREATE STATISTICS addresses_geo (dependencies) ON city, state FROM addresses;</code> fixes
+              it.
+            </li>
+            <li>
+              <strong>Partition by time</strong> when queries mostly touch recent data. A query for last week
+              then plans and scans only last week's partitions.
+            </li>
+            <li>
+              <strong>Give sorts and hashes room, carefully.</strong>
+              <code>Sort Method: external merge</code> or a hash with <code>Batches</code> above 1 means it
+              ran out of <code>work_mem</code> and spilled to disk. But that limit applies per sort or hash,
+              per query, per connection;
+              <a
+                class="u"
+                href="https://zerodha.tech/blog/working-with-postgresql/"
+                target="_blank"
+                rel="noopener"
+                >Zerodha's engineering team has written</a
+              >
+              about how fast it multiplies. Raise it with <code>SET LOCAL</code> for the queries that need it,
+              not for the whole server.
+            </li>
+            <li>
+              <strong>Make the plan part of review.</strong> A change that puts a query on a hot path ships
+              with its <code>EXPLAIN ANALYZE</code>, run against production-sized data.
+            </li>
+          </ul>
+
+          <div class="callout">
+            The planner isn't guessing, and it isn't magic. It is doing arithmetic on estimates. When a query
+            is slow, ask where the estimate first went wrong before asking which index is missing.
+          </div>
+
+          <div class="post-foot">
+            <p>
+              The demo's cost model is a simplified version of PostgreSQL's own (<code>costsize.c</code>) with
+              default settings, for one table and one predicate. Real plans also weigh caching, parallel
+              workers and much more. For the full picture:
+              <a
+                class="u"
+                href="https://www.postgresql.org/docs/current/using-explain.html"
+                target="_blank"
+                rel="noopener"
+                >Using EXPLAIN ↗</a
+              >
+              and
+              <a
+                class="u"
+                href="https://www.postgresql.org/docs/current/planner-stats.html"
+                target="_blank"
+                rel="noopener"
+                >Statistics used by the planner ↗</a
+              >.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <div class="case__end mono">
+        <a class="u" href="/writing/" data-magnetic>← writing</a>
+        <span class="links">
+          <a href="/writing/cache-failure-modes/" data-magnetic>caching →</a>
+          <a href="/writing/vcluster-on-eks/" data-magnetic>vCluster on EKS →</a>
+          <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+        </span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/post.ts"></script>
+  </body>
+</html>

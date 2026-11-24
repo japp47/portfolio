@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Five lines of cache-aside, and the three ways they fall over — Jappreet Singh Chhabra</title>
+    <meta
+      name="description"
+      content="Cache penetration, cache stampedes and hot keys: the three assumptions inside cache-aside that stop being true at scale, and what each fix costs. With a stampede simulator and a Bloom filter to play with."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href="https://jappreet.netlify.app/writing/cache-failure-modes/" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Jappreet Singh Chhabra" />
+    <meta property="og:url" content="https://jappreet.netlify.app/writing/cache-failure-modes/" />
+    <meta property="og:title" content="Five lines of cache-aside, and the three ways they fall over" />
+    <meta
+      property="og:description"
+      content="A cache fixes latency. It also adds three new ways for a system to fall over."
+    />
+    <meta property="og:image" content="https://jappreet.netlify.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://jappreet.netlify.app/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/writing/" data-magnetic>writing</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+        <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="case" id="top">
+      <article>
+        <header class="post-head">
+          <div class="case__top mono">
+            <a class="case__back" href="/writing/" data-magnetic>← writing</a>
+          </div>
+
+          <p class="case__eyebrow mono">caching</p>
+          <h1>Five lines of cache-aside, and the three ways they fall over</h1>
+          <p class="case__tag">
+            A cache fixes latency. <em>It also adds three new ways for a system to fall over.</em>
+          </p>
+
+          <p class="post-meta mono">
+            <time datetime="2026-02-21">21 Feb 2026</time>
+            <span>·</span>
+            <span>10 min</span>
+            <span>·</span>
+            <span>caching · redis · interactive</span>
+          </p>
+        </header>
+
+        <div class="post-body">
+          <p class="lede">Almost every service has these five lines somewhere:</p>
+
+          <pre><code><span class="k">def</span> get(key):
+    <span class="k">if</span> (value := cache.get(key)) <span class="k">is not</span> None:
+        <span class="k">return</span> value
+    value = db.query(key)
+    cache.set(key, value, ttl=300)
+    <span class="k">return</span> value</code></pre>
+
+          <p>
+            Nothing in them is wrong. They are cache-aside, the most common caching pattern there is, and they
+            work beautifully right up until traffic stops being polite. They quietly assume three things:
+          </p>
+          <ol>
+            <li><strong>The keys people ask for exist.</strong> Otherwise every request is a miss.</li>
+            <li><strong>Keys expire quietly.</strong> Otherwise an expiry is an event.</li>
+            <li>
+              <strong>Load spreads evenly across keys.</strong> Otherwise one key is everyone's problem.
+            </li>
+          </ol>
+          <p>Each assumption breaks at scale, each break has a name, and each fix costs something.</p>
+
+          <h2>1. Keys that don't exist: cache penetration</h2>
+          <p>
+            Ask for <code>user:8f3a…</code>, an ID that was never created. The cache misses, because there was
+            never anything to cache. The database misses too. Nothing gets written back, so the next request
+            for the same key does exactly the same thing. Send a few thousand of those a second from rotating
+            addresses and every one of them lands on the database.
+          </p>
+          <p>
+            It is not only attackers. A client that retries lookups for deleted records, or a scraper walking
+            an ID range, does the same thing by accident. Per-IP rate limiting helps with the first and does
+            nothing about a botnet; it is a different layer, not a fix.
+          </p>
+
+          <h3>Cheap fixes first</h3>
+          <ul>
+            <li>
+              <strong>Cache the miss.</strong> Store "not found" with a short TTL, say 30 seconds. Repeated
+              requests for the same missing key now stop at the cache. It does nothing against an attacker who
+              never asks for the same key twice.
+            </li>
+            <li>
+              <strong>Validate the shape.</strong> If IDs are UUIDs or carry a checksum, a malformed one can
+              be rejected before any lookup at all.
+            </li>
+          </ul>
+
+          <h3>The real fix: a Bloom filter</h3>
+          <p>
+            A Bloom filter answers one question — <em>could this key ever have been added?</em> — with a few
+            hash computations and very little memory, without touching the database. It is an array of bits
+            and a few hash functions. Adding a key sets the bits its hashes point to. Checking a key looks at
+            the same bits: if any of them is still 0, the key was <strong>definitely</strong> never added. If
+            they are all 1, it <strong>maybe</strong> was, because other keys may have set those bits.
+          </p>
+
+          <figure class="bloom" data-bloom>
+            <div class="bloom__bits" aria-label="The filter's 32 bits"></div>
+            <p class="bloom__fill" data-out="fill"></p>
+
+            <form>
+              <input type="text" value="user:4242" aria-label="A key to check or add" spellcheck="false" />
+              <button type="submit" class="planner__toggle" value="check">check</button>
+              <button type="submit" class="planner__toggle" value="add">add</button>
+            </form>
+            <div class="bloom__try">
+              <span>try</span>
+              <button type="button" data-try="user:1003">user:1003</button>
+              <button type="button" data-try="user:4242">user:4242</button>
+              <button type="button" data-try="user:2024">user:2024</button>
+            </div>
+
+            <p class="bloom__result" data-out="result" aria-live="polite">
+              Five users are already in the filter. Check a key, or add your own.
+            </p>
+            <p class="bloom__keys">in the filter: <span data-out="keys"></span></p>
+          </figure>
+
+          <p>
+            That asymmetry is the whole point. A false positive costs one wasted database lookup. A false
+            negative would turn a real user away. Bloom filters never give a false negative, as long as every
+            key is added.
+          </p>
+          <p>
+            And they are small. At a 1% false-positive rate a filter needs about 9.6 bits per key and 7 hash
+            functions, so ten million keys fit in roughly 12 MB. Redis ships one (<code>BF.RESERVE</code>,
+            <code>BF.ADD</code>, <code>BF.EXISTS</code>); Guava has one for the JVM.
+          </p>
+
+          <div class="callout">
+            The catch is in "as long as every key is added". Add to the filter before the new row becomes
+            visible, not after. A missed add is a real user getting a 404.
+          </div>
+
+          <p>
+            The other costs: a plain Bloom filter can't delete, because a bit may be shared, so deleted keys
+            linger as false positives until you rebuild. Counting Bloom filters and cuckoo filters support
+            deletes, at more memory per key.
+          </p>
+
+          <h2>2. Keys that expire loudly: the stampede</h2>
+          <p>
+            A key everyone reads — a trending post, a flash-sale price, the home page config — expires. In the
+            hundred milliseconds it takes to rebuild, every request misses and every request decides, on its
+            own, to query the database. Each of those queries makes the next one slower, so the rebuild takes
+            longer, so more requests miss.
+          </p>
+          <p>
+            Below is a toy version: one key, 5,000 requests a second, and a database that is comfortable with
+            50 queries at once and slows down as more pile on.
+          </p>
+
+          <figure class="stampede" data-stampede>
+            <div class="stampede__modes">
+              <button type="button" class="planner__toggle" data-mode="none" aria-pressed="true">
+                no protection
+              </button>
+              <button type="button" class="planner__toggle" data-mode="lock" aria-pressed="false">
+                one rebuild (lock)
+              </button>
+              <button type="button" class="planner__toggle" data-mode="stale" aria-pressed="false">
+                serve stale, refresh behind
+              </button>
+              <button type="button" class="planner__toggle stampede__replay" data-replay>↻ replay</button>
+            </div>
+
+            <div class="stampede__chart"></div>
+
+            <dl class="stampede__stats">
+              <div>
+                <dt>queries sent to the database</dt>
+                <dd data-stat="queries">0</dd>
+              </div>
+              <div>
+                <dt>most running at once</dt>
+                <dd data-stat="peak">0</dd>
+              </div>
+              <div>
+                <dt>slowest request waited</dt>
+                <dd data-stat="wait">…</dd>
+              </div>
+              <div>
+                <dt>database busy until</dt>
+                <dd data-stat="busy">…</dd>
+              </div>
+            </dl>
+          </figure>
+
+          <p>
+            The striking number in the unprotected run is the last one. The cache is full again at 0.3 s, but
+            the database is still working through the pile-up until 1.4 s. Every query sent during those first
+            hundred milliseconds has to finish, whether anyone still needs its answer or not.
+          </p>
+
+          <h3>Let one request rebuild</h3>
+          <p>
+            Whoever misses first takes a lock and rebuilds; everyone else waits briefly and reads the fresh
+            value. In Redis the lock is one command:
+          </p>
+          <pre><code><span class="k">SET</span> lock:home_feed &lt;random-token&gt; <span class="k">NX PX</span> 5000   <span class="c"># only if absent, expires in 5 s</span></code></pre>
+          <p>
+            You don't need Redlock or ZooKeeper for this. The lock is there for <em>efficiency</em>, not
+            correctness: if it fails and two requests rebuild, you wasted one query and nobody saw wrong data.
+            Martin Kleppmann draws exactly that line in
+            <a
+              class="u"
+              href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html"
+              target="_blank"
+              rel="noopener"
+              >How to do distributed locking</a
+            >, and it decides how much machinery a lock deserves. Inside one process, Go's
+            <code>singleflight</code> does the same job before the request even reaches Redis.
+          </p>
+
+          <h3>Or don't make anyone wait</h3>
+          <p>
+            Store a soft expiry inside the value and a longer TTL on the key. Past the soft expiry, serve the
+            old value and let one request refresh it in the background. Users see data a few seconds older;
+            nobody waits and the database sees one query. For feeds, counters and dashboards that is the right
+            trade. For a bank balance it is not.
+          </p>
+
+          <h3>Or refresh before it expires</h3>
+          <p>
+            <em>Probabilistic early expiration</em> (Vattani et al., VLDB 2015) has each reader roll a die
+            that gets more likely to come up "refresh" as the expiry approaches, weighted by how long a
+            rebuild takes. One reader refreshes early; the key never actually expires under load.
+          </p>
+          <pre><code><span class="c"># delta: how long a rebuild takes; beta: 1.0 by default, higher refreshes earlier</span>
+<span class="k">if</span> now - delta * beta * log(random()) &gt;= expiry:
+    rebuild()</code></pre>
+
+          <p>
+            A cousin of the stampede: thousands of keys written at the same moment, by a deploy warming the
+            cache or a nightly batch job, all expire at the same moment too. Add jitter to every TTL — 300
+            seconds plus a random 0 to 30 — and the expiries spread out on their own.
+          </p>
+
+          <h2>3. One key everyone wants: the hot key</h2>
+          <p>
+            A cache cluster spreads keys across nodes by hashing them. That spreads <em>keys</em>, not
+            <em>traffic</em>. If one key takes half your reads, the node that owns it takes half your reads,
+            and it saturates while the rest of the cluster idles. The database is fine; the cache is the
+            bottleneck.
+          </p>
+
+          <div class="fig" data-swap>
+            <div class="swap" role="group" aria-label="Show a hot key on one node, or spread out">
+              <button type="button" data-show="before" aria-pressed="true">one copy</button>
+              <button type="button" data-show="after" aria-pressed="false">spread out</button>
+            </div>
+
+            <div class="swap__panel" data-panel="before">
+              <div class="fig__frame">
+                <svg
+                  viewBox="0 0 1000 330"
+                  role="img"
+                  aria-label="Fifty app servers all read the same key, so all of that traffic lands on the one cache node that owns it while the other nodes sit idle."
+                >
+                  <text class="dg-lane" x="40" y="36">50 app servers</text>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="40" y="52" width="920" height="54" />
+                    <text class="dg-head" x="60" y="85">every request reads post:viral_42</text>
+                  </g>
+                  <g class="dg-edge">
+                    <path d="M200,106 V214" />
+                    <path d="M194,206 L200,216 L206,206" />
+                    <path d="M330,106 V160 H220 V214" />
+                    <path d="M460,106 V170 H230 V214" />
+                    <path d="M590,106 V180 H240 V214" />
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box step-bad" x="40" y="216" width="200" height="66" />
+                    <text class="dg-head" x="58" y="244">node A</text>
+                    <text class="text-bad dg-sub" x="58" y="266">owns the key · 100% CPU</text>
+                    <rect class="dg-box" x="280" y="216" width="200" height="66" />
+                    <text class="dg-head" x="298" y="244">node B</text>
+                    <text class="dg-sub" x="298" y="266">idle</text>
+                    <rect class="dg-box" x="520" y="216" width="200" height="66" />
+                    <text class="dg-head" x="538" y="244">node C</text>
+                    <text class="dg-sub" x="538" y="266">idle</text>
+                    <rect class="dg-box" x="760" y="216" width="200" height="66" />
+                    <text class="dg-head" x="778" y="244">node D</text>
+                    <text class="dg-sub" x="778" y="266">idle</text>
+                  </g>
+                  <text class="text-bad dg-sub" x="500" y="316" text-anchor="middle">
+                    hashing spreads keys, not traffic
+                  </text>
+                </svg>
+              </div>
+            </div>
+
+            <div class="swap__panel" data-panel="after" hidden>
+              <div class="fig__frame">
+                <svg
+                  viewBox="0 0 1000 330"
+                  role="img"
+                  aria-label="Each app server keeps the hot key in a local cache for a second, and the remaining reads pick one of four copies, one per cache node."
+                >
+                  <text class="dg-lane" x="40" y="36">50 app servers, each with a 1-second local copy</text>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="40" y="52" width="920" height="54" />
+                    <text class="dg-head" x="60" y="85">local hit, or read post:viral_42:{random 0–3}</text>
+                  </g>
+                  <g class="dg-edge">
+                    <path d="M140,106 V214" />
+                    <path d="M134,206 L140,216 L146,206" />
+                    <path d="M380,106 V214" />
+                    <path d="M374,206 L380,216 L386,206" />
+                    <path d="M620,106 V214" />
+                    <path d="M614,206 L620,216 L626,206" />
+                    <path d="M860,106 V214" />
+                    <path d="M854,206 L860,216 L866,206" />
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="40" y="216" width="200" height="66" />
+                    <text class="dg-head" x="58" y="244">node A</text>
+                    <text class="dg-sub" x="58" y="266">post:viral_42:0</text>
+                    <rect class="dg-box" x="280" y="216" width="200" height="66" />
+                    <text class="dg-head" x="298" y="244">node B</text>
+                    <text class="dg-sub" x="298" y="266">post:viral_42:1</text>
+                    <rect class="dg-box" x="520" y="216" width="200" height="66" />
+                    <text class="dg-head" x="538" y="244">node C</text>
+                    <text class="dg-sub" x="538" y="266">post:viral_42:2</text>
+                    <rect class="dg-box" x="760" y="216" width="200" height="66" />
+                    <text class="dg-head" x="778" y="244">node D</text>
+                    <text class="dg-sub" x="778" y="266">post:viral_42:3</text>
+                  </g>
+                  <text class="text-good dg-sub" x="500" y="316" text-anchor="middle">
+                    a quarter of what's left on each node, and most reads never leave the app server
+                  </text>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <ul>
+            <li>
+              <strong>Keep a local copy first.</strong> An in-process cache with a one-second TTL turns
+              thousands of reads a second from each app server into one. It is usually the biggest win, and
+              the price is up to a second of staleness.
+            </li>
+            <li>
+              <strong>Then split the key.</strong> Store N copies under suffixed keys that hash to different
+              nodes, and read a random one. The price: every write and invalidation has to touch all N, and
+              for a moment they can disagree.
+            </li>
+            <li>
+              <strong>Find it before it finds you.</strong> <code>redis-cli --hotkeys</code> lists the hottest
+              keys, once the eviction policy is one of the LFU ones (<code>allkeys-lfu</code>).
+            </li>
+          </ul>
+
+          <h2>All of it, in order</h2>
+          <p>Put together, a read path that survives all three looks like this:</p>
+
+          <div class="fig">
+            <div class="fig__frame">
+              <svg
+                viewBox="0 0 1000 215"
+                data-sequence
+                role="img"
+                aria-label="A request passes a shape check, a Bloom filter, a local cache and Redis before a single locked rebuild from the database. Each stage can answer early."
+              >
+                <g class="dg-edge">
+                  <path d="M160,95 H184" />
+                  <path d="M176,89 L186,95 L176,101" />
+                  <path d="M326,95 H350" />
+                  <path d="M342,89 L352,95 L342,101" />
+                  <path d="M492,95 H516" />
+                  <path d="M508,89 L518,95 L508,101" />
+                  <path d="M658,95 H682" />
+                  <path d="M674,89 L684,95 L674,101" />
+                  <path d="M824,95 H848" />
+                  <path d="M840,89 L850,95 L840,101" />
+                  <path d="M256,130 V170" />
+                  <path d="M422,130 V170" />
+                  <path d="M588,130 V170" />
+                  <path d="M754,130 V170" />
+                  <path d="M920,130 V170" />
+                </g>
+
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="20" y="60" width="140" height="70" />
+                  <text class="dg-head" x="36" y="100">Request</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="186" y="60" width="140" height="70" />
+                  <text class="dg-head" x="202" y="90">Shape check</text>
+                  <text class="dg-sub" x="202" y="112">microseconds</text>
+                  <text class="dg-label" x="256" y="194" text-anchor="middle">malformed → 400</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="352" y="60" width="140" height="70" />
+                  <text class="dg-head" x="368" y="90">Bloom filter</text>
+                  <text class="dg-sub" x="368" y="112">penetration</text>
+                  <text class="dg-label" x="422" y="194" text-anchor="middle">never added → 404</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="518" y="60" width="140" height="70" />
+                  <text class="dg-head" x="534" y="90">Local cache</text>
+                  <text class="dg-sub" x="534" y="112">hot keys</text>
+                  <text class="dg-label" x="588" y="194" text-anchor="middle">hit → return</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="684" y="60" width="140" height="70" />
+                  <text class="dg-head" x="700" y="90">Redis</text>
+                  <text class="dg-sub" x="700" y="112">jittered TTLs</text>
+                  <text class="dg-label" x="754" y="194" text-anchor="middle">hit or stale → return</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="850" y="60" width="130" height="70" style="stroke: var(--fg)" />
+                  <text class="dg-head" x="866" y="90">Lock + DB</text>
+                  <text class="dg-sub" x="866" y="112">stampede</text>
+                  <text class="dg-label" x="915" y="194" text-anchor="middle">one rebuild</text>
+                </g>
+                <text class="dg-lane" x="20" y="36">most requests never get past the third box</text>
+              </svg>
+            </div>
+          </div>
+
+          <div class="table-wrap methods" data-reveal>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">failure</th>
+                  <th scope="col">the assumption that broke</th>
+                  <th scope="col">fix, and what it costs</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Penetration</td>
+                  <td>The keys people ask for exist</td>
+                  <td>Bloom filter: memory, keeping it in sync, no deletes</td>
+                </tr>
+                <tr>
+                  <td>Stampede</td>
+                  <td>Expiry is quiet</td>
+                  <td>One rebuild, stale reads or early refresh: brief waits or older data</td>
+                </tr>
+                <tr>
+                  <td>Mass expiry</td>
+                  <td>Keys expire independently</td>
+                  <td>TTL jitter: slightly less predictable expiry</td>
+                </tr>
+                <tr>
+                  <td>Hot key</td>
+                  <td>Traffic spreads evenly</td>
+                  <td>Local cache, key copies: more memory, wider invalidation</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout">
+            None of these are bugs in the five lines. They are what happens when the five lines meet scale, or
+            someone hostile. A cache isn't only a speed layer; it is part of how the system stays up.
+          </div>
+
+          <div class="post-foot">
+            <p>
+              The stampede simulator is a toy model: each query takes 100 ms on an idle database and slows in
+              proportion to how many are running. Real databases degrade less politely. Further reading:
+              <a
+                class="u"
+                href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html"
+                target="_blank"
+                rel="noopener"
+                >Kleppmann on distributed locks ↗</a
+              >
+              and
+              <a
+                class="u"
+                href="https://www.vldb.org/pvldb/vol8/p886-vattani.pdf"
+                target="_blank"
+                rel="noopener"
+                >Optimal Probabilistic Cache Stampede Prevention ↗</a
+              >.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <div class="case__end mono">
+        <a class="u" href="/writing/" data-magnetic>← writing</a>
+        <span class="links">
+          <a href="/writing/luhn-check-digit/" data-magnetic>luhn →</a>
+          <a href="/writing/postgres-query-planner/" data-magnetic>query planner →</a>
+          <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+        </span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/post.ts"></script>
+  </body>
+</html>

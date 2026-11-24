@@ -42,7 +42,7 @@
       <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
       <nav class="bar__nav" aria-label="Main">
         <a href="/#work" data-magnetic>work</a>
-        <a href="/#now" data-magnetic>now</a>
+        <a href="/writing/" data-magnetic>writing</a>
         <a href="/#about" data-magnetic>about</a>
         <a href="/#contact" data-magnetic>contact</a>
         <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
@@ -53,7 +53,7 @@
     </header>
 
     <main class="case" id="top">
-      <header class="case__hero">
+      <header class="case__hero case__hero--cover">
         <div class="case__top mono">
           <a class="case__back" href="/" data-magnetic>← portfolio</a>
         </div>
@@ -63,41 +63,74 @@
         <p class="case__tag">
           What I learned the hard way — <em>mostly about things going wrong at the same time.</em>
         </p>
+        <canvas class="cover__field" aria-hidden="true"></canvas>
+        <a class="cover__cue mono" href="#posts" data-magnetic>5 notes ↓</a>
       </header>
 
       <!-- ============ POSTS ============
-           To add one, copy a <li class="post"> block. Keep them newest first, and keep each
-           one's year heading above it. An external post adds class="is-away" and target="_blank". -->
+           To add one, copy a post block, keep them newest first, and bump the count in .cover__cue
+           above. An external post adds class="is-away" and target="_blank". -->
       <section id="posts" aria-labelledby="posts-h">
         <h2 id="posts-h" class="sr-only">Posts</h2>
 
-        <!-- Nothing is published yet. Delete this block once the first post ships. -->
-        <div class="soon">
-          <p class="soon__line">Nothing published yet.</p>
-          <p>
-            The two case studies are the long form for now, and they carry the detail a post would: the race
-            condition that made a device skip a record for good, and the ordering decision that keeps
-            half-written answers out of a database.
-          </p>
-          <div class="soon__links mono">
-            <a class="u" href="/work/99ile/" data-magnetic>the sync race →</a>
-            <a class="u" href="/work/local-llm-gateway/" data-magnetic>two guards and the order →</a>
-          </div>
-        </div>
-
-        <!--
         <ol class="posts">
-          <li class="post-year"><span class="mono">2026</span></li>
-          <li class="post">
-            <a href="/writing/the-sequence-that-lied/">
-              <span class="post__date mono">12 Dec 2026</span>
-              <span class="post__title">The sequence that lied</span>
-              <span class="post__blurb">Postgres hands out numbers before it commits, and a cursor can walk straight past a row.</span>
-              <span class="post__meta mono">8 min · postgres · concurrency</span>
+          <li class="post" data-reveal>
+            <a href="/writing/postgres-query-planner/">
+              <span class="post__date mono">18 Aug 2026</span>
+              <span class="post__title">What the Postgres planner is actually deciding</span>
+              <span class="post__blurb"
+                >How the cost model prices every plan, why an index isn't always faster, and how one stale
+                estimate turns 12 lookups into 48,210. With a planner you can play with.</span
+              >
+              <span class="post__meta mono">11 min · postgres · performance · interactive</span>
+            </a>
+          </li>
+          <li class="post" data-reveal>
+            <a href="/writing/event-driven-architecture/">
+              <span class="post__date mono">25 Jun 2026</span>
+              <span class="post__title">Event-driven architecture, and the part the diagrams leave out</span>
+              <span class="post__blurb"
+                >The dual write, the outbox, duplicate delivery and ordering — the four problems the fan-out
+                picture never shows.</span
+              >
+              <span class="post__meta mono">9 min · kafka · postgres · distributed systems</span>
+            </a>
+          </li>
+          <li class="post" data-reveal>
+            <a href="/writing/vcluster-on-eks/">
+              <span class="post__date mono">1 May 2026</span>
+              <span class="post__title">Fifty EKS clusters, or one: what vCluster actually shares</span>
+              <span class="post__blurb"
+                >A cluster per team is mostly duplicated plumbing. What gets isolated, what gets shared, how
+                one load balancer ends up serving fifty environments — and where logical isolation stops being
+                enough.</span
+              >
+              <span class="post__meta mono">10 min · kubernetes · eks · aws</span>
+            </a>
+          </li>
+          <li class="post" data-reveal>
+            <a href="/writing/cache-failure-modes/">
+              <span class="post__date mono">21 Feb 2026</span>
+              <span class="post__title">Five lines of cache-aside, and the three ways they fall over</span>
+              <span class="post__blurb"
+                >Cache penetration, stampedes and hot keys: the assumption each one breaks, and what each fix
+                costs. With a stampede simulator and a Bloom filter to play with.</span
+              >
+              <span class="post__meta mono">10 min · caching · redis · interactive</span>
+            </a>
+          </li>
+          <li class="post" data-reveal>
+            <a href="/writing/luhn-check-digit/">
+              <span class="post__date mono">13 Feb 2026</span>
+              <span class="post__title">How credit cards catch typos: the Luhn algorithm</span>
+              <span class="post__blurb"
+                >The anatomy of a card number, the four steps, exactly which typos Luhn catches and misses,
+                and where it fits next to a payment API. With a card number you can break.</span
+              >
+              <span class="post__meta mono">8 min · payments · algorithms · interactive</span>
             </a>
           </li>
         </ol>
-        -->
       </section>
 
       <div class="case__end mono">

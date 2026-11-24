@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Fifty EKS clusters, or one: what vCluster actually shares — Jappreet Singh Chhabra</title>
+    <meta
+      name="description"
+      content="A cluster per team is mostly duplicated plumbing. What vCluster isolates, what it shares, how one ALB ends up serving fifty environments, and where logical isolation stops being enough."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+    <link rel="canonical" href="https://jappreet.netlify.app/writing/vcluster-on-eks/" />
+
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Jappreet Singh Chhabra" />
+    <meta property="og:url" content="https://jappreet.netlify.app/writing/vcluster-on-eks/" />
+    <meta property="og:title" content="Fifty EKS clusters, or one: what vCluster actually shares" />
+    <meta
+      property="og:description"
+      content="The control plane was never the expensive part. It was everything we copied around it."
+    />
+    <meta property="og:image" content="https://jappreet.netlify.app/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://jappreet.netlify.app/og.jpg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="cursor" aria-hidden="true">
+      <span class="cursor__dot"></span>
+      <span class="cursor__ring"></span>
+    </div>
+
+    <header class="bar">
+      <a class="mark" href="/" aria-label="Back to the portfolio">jsc<span>.</span></a>
+      <nav class="bar__nav" aria-label="Main">
+        <a href="/#work" data-magnetic>work</a>
+        <a href="/writing/" data-magnetic>writing</a>
+        <a href="/#about" data-magnetic>about</a>
+        <a href="/#contact" data-magnetic>contact</a>
+        <a href="#terminal" data-open-terminal data-magnetic>terminal</a>
+      </nav>
+      <p class="bar__clock mono">
+        <span class="live-dot" aria-hidden="true"></span>Bengaluru <time id="clock">--:--</time>
+      </p>
+    </header>
+
+    <main class="case" id="top">
+      <article>
+        <header class="post-head">
+          <div class="case__top mono">
+            <a class="case__back" href="/writing/" data-magnetic>← writing</a>
+          </div>
+
+          <p class="case__eyebrow mono">infrastructure</p>
+          <h1>Fifty EKS clusters, or one: what vCluster actually shares</h1>
+          <p class="case__tag">
+            The control plane was never the expensive part. <em>It was everything we copied around it.</em>
+          </p>
+
+          <p class="post-meta mono">
+            <time datetime="2026-05-01">1 May 2026</time>
+            <span>·</span>
+            <span>10 min</span>
+            <span>·</span>
+            <span>kubernetes · eks · aws</span>
+          </p>
+        </header>
+
+        <div class="post-body">
+          <p class="lede">
+            A QA engineer asks for a test environment. The platform team provisions a fresh EKS cluster:
+            control plane, node group, load balancer, DNS, monitoring agents. Forty-five minutes later they
+            have somewhere to deploy. Multiply by a few dozen teams and you have a full-time job maintaining
+            environments that are idle most of the day.
+          </p>
+          <p>
+            The obvious reading is that Kubernetes clusters are slow to create. The more useful reading is
+            that
+            <strong>almost nothing in those forty-five minutes was about isolation.</strong> It was about
+            copying the same plumbing into yet another account-shaped hole.
+          </p>
+
+          <h2>What a cluster per team actually costs</h2>
+          <p>Isolation is the thing you wanted. Here is what you paid for alongside it, fifty times over.</p>
+
+          <div class="fig" data-swap>
+            <div class="swap" role="group" aria-label="Show a cluster per team or one shared cluster">
+              <button type="button" data-show="before" aria-pressed="true">a cluster per team</button>
+              <button type="button" data-show="after" aria-pressed="false">one cluster</button>
+            </div>
+
+            <div class="swap__panel" data-panel="before">
+              <div class="fig__frame">
+                <svg
+                  viewBox="0 0 1000 440"
+                  role="img"
+                  aria-label="Three identical EKS clusters, each with its own control plane, nodes, load balancer and monitoring stack, repeated fifty times."
+                >
+                  <text class="dg-lane" x="40" y="40">one per team · × 50</text>
+
+                  <rect class="dg-group" x="40" y="60" width="290" height="330" />
+                  <rect class="dg-group" x="355" y="60" width="290" height="330" />
+                  <rect class="dg-group" x="670" y="60" width="290" height="330" />
+
+                  <g class="dg-node">
+                    <rect class="dg-box" x="60" y="90" width="250" height="44" />
+                    <text class="dg-head" x="78" y="118">EKS control plane</text>
+                    <rect class="dg-box" x="60" y="152" width="250" height="44" />
+                    <text class="dg-head" x="78" y="180">Node group</text>
+                    <rect class="dg-box" x="60" y="214" width="250" height="44" />
+                    <text class="dg-head" x="78" y="242">Load balancer</text>
+                    <rect class="dg-box" x="60" y="276" width="250" height="44" />
+                    <text class="dg-head" x="78" y="304">Monitoring, ingress, DNS</text>
+                    <text class="dg-sub" x="78" y="356">QA-1</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="375" y="90" width="250" height="44" />
+                    <text class="dg-head" x="393" y="118">EKS control plane</text>
+                    <rect class="dg-box" x="375" y="152" width="250" height="44" />
+                    <text class="dg-head" x="393" y="180">Node group</text>
+                    <rect class="dg-box" x="375" y="214" width="250" height="44" />
+                    <text class="dg-head" x="393" y="242">Load balancer</text>
+                    <rect class="dg-box" x="375" y="276" width="250" height="44" />
+                    <text class="dg-head" x="393" y="304">Monitoring, ingress, DNS</text>
+                    <text class="dg-sub" x="393" y="356">QA-2</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="690" y="90" width="250" height="44" />
+                    <text class="dg-head" x="708" y="118">EKS control plane</text>
+                    <rect class="dg-box" x="690" y="152" width="250" height="44" />
+                    <text class="dg-head" x="708" y="180">Node group</text>
+                    <rect class="dg-box" x="690" y="214" width="250" height="44" />
+                    <text class="dg-head" x="708" y="242">Load balancer</text>
+                    <rect class="dg-box" x="690" y="276" width="250" height="44" />
+                    <text class="dg-head" x="708" y="304">Monitoring, ingress, DNS</text>
+                    <text class="dg-sub" x="708" y="356">QA-3</text>
+                  </g>
+
+                  <text class="text-bad dg-sub" x="500" y="418" text-anchor="middle">
+                    only the top row is isolation. the other three are the same thing, copied.
+                  </text>
+                </svg>
+              </div>
+              <p class="fig__note mono muted">
+                Each environment also idles most of the day, while its node group keeps a floor of capacity
+                running.
+              </p>
+            </div>
+
+            <div class="swap__panel" data-panel="after" hidden>
+              <div class="fig__frame">
+                <svg
+                  viewBox="0 0 1000 440"
+                  role="img"
+                  aria-label="One EKS cluster holding three virtual clusters, each with its own API server, sharing nodes, one load balancer and one monitoring stack."
+                >
+                  <text class="dg-lane" x="40" y="40">one EKS cluster · 50 virtual clusters</text>
+
+                  <rect class="dg-group" x="40" y="60" width="920" height="330" />
+
+                  <g class="dg-node">
+                    <rect class="dg-box" x="70" y="90" width="270" height="62" />
+                    <text class="dg-head" x="88" y="116">vCluster · QA-1</text>
+                    <text class="dg-sub" x="88" y="136">its own API server + RBAC</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="365" y="90" width="270" height="62" />
+                    <text class="dg-head" x="383" y="116">vCluster · QA-2</text>
+                    <text class="dg-sub" x="383" y="136">its own API server + RBAC</text>
+                  </g>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="660" y="90" width="270" height="62" />
+                    <text class="dg-head" x="678" y="116">vCluster · QA-3</text>
+                    <text class="dg-sub" x="678" y="136">its own API server + RBAC</text>
+                  </g>
+
+                  <g class="dg-edge">
+                    <path d="M205,152 V188" />
+                    <path d="M199,180 L205,190 L211,180" />
+                    <path d="M500,152 V188" />
+                    <path d="M494,180 L500,190 L506,180" />
+                    <path d="M795,152 V188" />
+                    <path d="M789,180 L795,190 L801,180" />
+                  </g>
+
+                  <text class="dg-lane" x="70" y="214">shared by all of them</text>
+                  <g class="dg-node">
+                    <rect class="dg-box" x="70" y="226" width="860" height="44" />
+                    <text class="dg-head" x="88" y="254">Nodes · EKS Auto Mode, Spot capacity</text>
+                    <rect class="dg-box" x="70" y="282" width="860" height="44" />
+                    <text class="dg-head" x="88" y="310">One Application Load Balancer</text>
+                    <rect class="dg-box" x="70" y="338" width="860" height="44" />
+                    <text class="dg-head" x="88" y="366">One ingress controller, one monitoring stack</text>
+                  </g>
+
+                  <text class="text-good dg-sub" x="500" y="418" text-anchor="middle">
+                    each team still gets a real Kubernetes API. the plumbing is installed once.
+                  </text>
+                </svg>
+              </div>
+              <p class="fig__note mono muted">
+                A virtual cluster is a control plane running as pods — API server, controller manager and its
+                own datastore — inside a namespace on the host.
+              </p>
+            </div>
+          </div>
+
+          <div class="callout">
+            A virtual cluster is not a namespace with better manners. Your team gets a real API server, so you
+            can install CRDs, make cluster roles and run operators — none of which a shared namespace allows.
+          </div>
+
+          <h2>The part that makes it work: syncing in both directions</h2>
+          <p>
+            A virtual cluster on its own would be an island. What makes it useful on EKS is that specific
+            resources cross the boundary, and the direction matters.
+          </p>
+          <ul>
+            <li>
+              <strong>Host → virtual.</strong> The ingress class and storage class are pushed down, so a
+              developer inside the virtual cluster can ask for <code>alb</code> or a gp3 volume as if they had
+              installed those controllers themselves.
+            </li>
+            <li>
+              <strong>Virtual → host.</strong> Ingress objects are pulled up, so the one ALB controller
+              running on the host sees them and acts on them.
+            </li>
+          </ul>
+
+          <pre><code><span class="k">sync</span>:
+  <span class="k">fromHost</span>:
+    ingressClasses: { enabled: <span class="k">true</span> }   <span class="c"># the ALB class, usable inside</span>
+    storageClasses: { enabled: <span class="k">true</span> }   <span class="c"># gp3, usable inside</span>
+  <span class="k">toHost</span>:
+    ingresses: { enabled: <span class="k">true</span> }        <span class="c"># rules bubble up to the real ALB</span></code></pre>
+
+          <p>
+            That second direction is the one that saves the money. An Ingress created by a QA engineer inside
+            their own cluster turns into a rule on a load balancer they cannot see and do not pay for.
+          </p>
+
+          <div class="fig">
+            <div class="fig__frame">
+              <svg
+                viewBox="0 0 1000 340"
+                data-sequence
+                role="img"
+                aria-label="An ingress created inside a virtual cluster is synced to the host namespace, where the ALB controller turns it into a path rule on the single shared load balancer."
+              >
+                <g class="dg-edge">
+                  <path d="M322,82 H372" />
+                  <path d="M364,76 L374,82 L364,88" />
+                  <path d="M662,82 H712" />
+                  <path d="M704,76 L714,82 L704,88" />
+                  <path d="M840,114 V176 H500 V212" />
+                  <path d="M494,204 L500,214 L506,204" />
+                </g>
+
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="40" y="50" width="282" height="64" />
+                  <text class="dg-head" x="58" y="76">You create an Ingress</text>
+                  <text class="dg-sub" x="58" y="96">inside vCluster QA-2 · path /app2</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="374" y="50" width="288" height="64" />
+                  <text class="dg-head" x="392" y="76">vCluster syncs it up</text>
+                  <text class="dg-sub" x="392" y="96">into the host namespace loft-p-…</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="714" y="50" width="246" height="64" />
+                  <text class="dg-head" x="732" y="76">ALB controller sees it</text>
+                  <text class="dg-sub" x="732" y="96">running on the host</text>
+                </g>
+                <g class="dg-node" data-step>
+                  <rect class="dg-box" x="300" y="214" width="400" height="64" />
+                  <text class="dg-head" x="318" y="240">One ALB gains one rule</text>
+                  <text class="dg-sub" x="318" y="260">group.name: vcluster · /app2 → QA-2</text>
+                </g>
+                <text class="dg-label" x="500" y="310" text-anchor="middle">
+                  /app1 → QA-1 · /app2 → QA-2 · /app3 → QA-3 — all on the same listener
+                </text>
+              </svg>
+            </div>
+            <p class="fig__note mono muted">
+              The grouping annotation is what lets separate Ingress objects share one load balancer instead of
+              creating one each.
+            </p>
+          </div>
+
+          <p>Set the group once on the ingress class and every environment lands on the same ALB:</p>
+
+          <pre><code><span class="k">apiVersion</span>: eks.amazonaws.com/v1
+<span class="k">kind</span>: IngressClassParams
+<span class="k">metadata</span>:
+  name: alb
+<span class="k">spec</span>:
+  scheme: internet-facing
+  group:
+    name: vcluster        <span class="c"># 50 ingresses, 1 load balancer</span></code></pre>
+
+          <h2>The numbers</h2>
+          <p>
+            Worth reading as orders of magnitude rather than precise figures — the cost side depends entirely
+            on instance types, region and how long environments actually live.
+          </p>
+
+          <div class="table-wrap" data-reveal>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col"></th>
+                  <th scope="col">a cluster per team</th>
+                  <th scope="col">one cluster</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Time to a usable environment</td>
+                  <td class="was">30–45 min</td>
+                  <td class="now-val">under 5 min</td>
+                </tr>
+                <tr>
+                  <td>EKS control planes</td>
+                  <td class="was">50+</td>
+                  <td class="now-val">1</td>
+                </tr>
+                <tr>
+                  <td>Load balancers</td>
+                  <td class="was">50</td>
+                  <td class="now-val">1</td>
+                </tr>
+                <tr>
+                  <td>Platform tool deployments to maintain</td>
+                  <td class="was">500+</td>
+                  <td class="now-val">~10</td>
+                </tr>
+                <tr>
+                  <td>Engineering hours a year on setup</td>
+                  <td class="was">500+</td>
+                  <td class="now-val">near zero</td>
+                </tr>
+                <tr>
+                  <td>Compute pricing</td>
+                  <td class="was">on-demand</td>
+                  <td class="now-val">Spot, up to 70% less</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            The hours matter more than the dollars. Forty-five minutes of waiting is not just forty-five
+            minutes; it is the reason a QA engineer batches up changes instead of testing one at a time, and
+            the reason environments get kept alive “just in case” rather than deleted. Making creation cheap
+            changes the behaviour, not only the bill.
+          </p>
+
+          <h2>Where logical isolation stops being enough</h2>
+          <p>
+            This is the part a vendor page will not dwell on. Virtual clusters give you
+            <strong>logical</strong> isolation, not infrastructure isolation, and the difference is not
+            academic.
+          </p>
+          <ul>
+            <li>
+              <strong>The nodes are shared.</strong> A test that eats memory is eating it from a pool other
+              teams are scheduled on. Resource quotas and limit ranges are not optional here the way they
+              arguably are on a dedicated cluster.
+            </li>
+            <li>
+              <strong>The kernel is shared.</strong> Anything that holds for containers on one host holds
+              here. A workload that needs a hard security boundary needs a different answer.
+            </li>
+            <li>
+              <strong>The host's failures are everyone's.</strong> You traded fifty small blast radii for one
+              large one. Upgrading the host cluster is now an event, not a Tuesday.
+            </li>
+            <li>
+              <strong>Debugging crosses a seam.</strong> A resource exists twice — inside the virtual cluster
+              and, renamed, in a host namespace. When something does not appear, you need to know which side
+              to look at.
+            </li>
+          </ul>
+
+          <h2>When to reach for it</h2>
+          <p>
+            The pattern fits when environments are <em>many, similar and short-lived</em>: review apps, QA
+            environments, per-branch previews, training sandboxes. That is exactly the shape where a dedicated
+            cluster is nearly all overhead.
+          </p>
+          <p>
+            It does not fit when you need a hard compliance boundary, when the workload wants specific
+            hardware and its own node pool, or when you only have one or two long-lived clusters — in which
+            case this is a layer of indirection buying you nothing.
+          </p>
+          <p>
+            The underlying question is the same one worth asking of any multi-tenancy decision:
+            <strong>what exactly are you isolating, and from whom?</strong> If the answer is "teams from each
+            other's mistakes", logical isolation is usually enough. If the answer involves the word "auditor",
+            it is not.
+          </p>
+
+          <div class="post-foot">
+            <p>
+              I wrote the full walkthrough — ACM certificate, ingress and storage classes, the platform Helm
+              values, creating clusters and deploying through the shared ALB, plus the clean-up —
+              <a
+                class="u"
+                href="https://medium.com/@jappreets4747/how-deloitte-reduced-environment-provisioning-from-45-minutes-to-under-5-minutes-saved-500-hours-8ca4b54177b9"
+                target="_blank"
+                rel="noopener"
+                >as a step-by-step guide on Medium ↗</a
+              >. This piece is the reasoning behind it.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <div class="case__end mono">
+        <a class="u" href="/writing/" data-magnetic>← writing</a>
+        <span class="links">
+          <a href="/writing/postgres-query-planner/" data-magnetic>query planner →</a>
+          <a href="/writing/event-driven-architecture/" data-magnetic>event-driven →</a>
+          <a href="mailto:jappreets4747@gmail.com" data-magnetic>email ↗</a>
+        </span>
+      </div>
+    </main>
+
+    <script type="module" src="/src/post.ts"></script>
+  </body>
+</html>

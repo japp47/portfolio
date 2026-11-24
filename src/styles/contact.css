@@ -35,12 +35,31 @@
   font-size: 17px;
 }
 
+/* the page links. On a phone this is the site's only navigation, because the
+   header's nav is hidden under 860px. */
+.contact__pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  margin-top: clamp(64px, 10vw, 130px);
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.contact__pages a {
+  color: var(--muted);
+  transition: color 0.3s;
+}
+
+.contact__pages a:hover {
+  color: var(--fg);
+}
+
 .contact__row {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 16px;
-  margin-top: clamp(80px, 12vw, 160px);
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 0;
 }
