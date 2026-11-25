@@ -6,6 +6,7 @@ import './styles/index.css';
 
 import { mountBinaryArt } from './features/binary-art';
 import { playIntro } from './features/hero/intro';
+import { mountMenu } from './features/menu';
 import { mountTerminal } from './features/terminal';
 import { mountClock } from './features/ui/clock';
 import { mountCursor } from './features/ui/cursor';
@@ -33,6 +34,7 @@ async function startField(el: HTMLCanvasElement): Promise<void> {
   if (field) mountMotionHint(field);
 }
 
+mountMenu(); // before the terminal and clock, which wire up the buttons and time inside it
 mountTerminal();
 mountClock();
 mountStickyBar();

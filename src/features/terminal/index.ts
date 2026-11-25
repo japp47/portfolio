@@ -153,7 +153,7 @@ export function mountTerminal(): void {
 
   // --- events -----------------------------------------------------------------------------------
   toggle.addEventListener('click', () => (isOpen() ? close() : open()));
-  dodgeLinkRows(toggle, '.hero__foot .links, .contact__pages, .contact__row, .case__end');
+  dodgeLinkRows(toggle, '.hero__foot .links, .contact__row, .case__end');
 
   panel.querySelector('form')!.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -214,7 +214,7 @@ export function mountTerminal(): void {
   });
 
   addEventListener('keydown', (e) => {
-    const typing = (e.target as Element).closest('input, textarea, [contenteditable]');
+    const typing = e.target instanceof Element && e.target.closest('input, textarea, [contenteditable]');
     if (e.key === 'Escape' && isOpen()) {
       e.preventDefault();
       close();

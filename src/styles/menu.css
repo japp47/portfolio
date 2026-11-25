@@ -1,0 +1,351 @@
+/* The phone menu: a button in the bar and a panel from the right. Hidden above 860px,
+   where the bar's own links are visible. */
+
+.bar__menu,
+.menu {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  /* the clock moves into the panel; the bar keeps the monogram and the button.
+     Two classes, because this file can load before the page's own header styles. */
+  .bar .bar__clock {
+    display: none;
+  }
+
+  .bar .bar__menu {
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: -10px -10px -10px 0;
+    padding: 10px;
+    font-size: 13px;
+    color: var(--fg);
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  /* two lines, the lower one shorter: a quieter hamburger */
+  .bar__menu i {
+    position: relative;
+    width: 20px;
+    height: 7px;
+  }
+
+  .bar__menu i::before,
+  .bar__menu i::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    height: 1.5px;
+    background: currentColor;
+    transition: width 0.4s var(--ease);
+  }
+
+  .bar__menu i::before {
+    top: 0;
+    width: 20px;
+  }
+
+  .bar__menu i::after {
+    bottom: 0;
+    width: 12px;
+  }
+
+  .bar__menu:active i::after {
+    width: 20px;
+  }
+
+  .menu {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+  }
+
+  .menu[hidden] {
+    display: none;
+  }
+
+  html.menu-open,
+  html.menu-open body {
+    overflow: hidden;
+  }
+
+  html.menu-open .term-toggle {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .menu__scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 5, 5, 0.6);
+    opacity: 0;
+    transition: opacity 0.5s var(--ease);
+  }
+
+  .menu__panel {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: min(88vw, 440px);
+    display: flex;
+    flex-direction: column;
+    padding: max(22px, env(safe-area-inset-top)) var(--pad) max(24px, env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--bg);
+    border-left: 1px solid var(--line);
+    transform: translateX(100%);
+    transition: transform 0.6s var(--ease);
+  }
+
+  /* the home page's dot field, faintly, rising from the bottom of the panel */
+  .menu__panel::before {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 46%;
+    background-image: radial-gradient(circle, rgba(237, 237, 234, 0.16) 1px, transparent 1.6px);
+    background-size: 14px 14px;
+    -webkit-mask-image: linear-gradient(to top, #000, transparent);
+    mask-image: linear-gradient(to top, #000, transparent);
+    pointer-events: none;
+  }
+
+  .menu__panel > * {
+    position: relative;
+  }
+
+  .menu.is-open .menu__scrim {
+    opacity: 1;
+  }
+
+  .menu.is-open .menu__panel {
+    transform: none;
+  }
+
+  .menu__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 32px;
+  }
+
+  .menu__close {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: -10px -10px -10px 0;
+    padding: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .menu__close i {
+    position: relative;
+    width: 14px;
+    height: 14px;
+  }
+
+  .menu__close i::before,
+  .menu__close i::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 14px;
+    height: 1.5px;
+    background: var(--fg);
+    transform: rotate(45deg);
+  }
+
+  .menu__close i::after {
+    transform: rotate(-45deg);
+  }
+
+  /* --- the pages ------------------------------------------------------------------------ */
+
+  .menu__nav {
+    display: grid;
+    margin-top: clamp(40px, 9vh, 72px);
+    border-top: 1px solid var(--line);
+  }
+
+  .menu__nav a {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    font: 400 clamp(34px, 9.5vw, 46px) / 1.05 var(--sans);
+    letter-spacing: -0.045em;
+    color: var(--fg);
+    transition:
+      color 0.3s,
+      padding-left 0.4s var(--ease);
+  }
+
+  .menu__nav a span {
+    width: 20px;
+    font-size: 11px;
+    letter-spacing: 0;
+    color: var(--dim);
+    transform: translateY(-1.1em);
+  }
+
+  /* when one entry is "here", the rest step back */
+  .menu.has-current .menu__nav a {
+    color: var(--muted);
+  }
+
+  .menu .menu__nav a[aria-current] {
+    color: var(--fg);
+  }
+
+  .menu__nav a[aria-current]::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    margin-left: auto;
+    align-self: center;
+    border-radius: 50%;
+    background: var(--fg);
+  }
+
+  .menu__nav a:active {
+    padding-left: 8px;
+    color: var(--fg);
+  }
+
+  /* --- case studies, actions, footer ----------------------------------------------------- */
+
+  .menu__group {
+    display: grid;
+    margin-top: 36px;
+  }
+
+  .menu__group p {
+    margin: 0 0 8px;
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .menu__group a {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 17px;
+    color: var(--muted);
+  }
+
+  .menu__group a[aria-current] {
+    color: var(--fg);
+  }
+
+  .menu__group a span {
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .menu__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .menu__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 12px;
+    font-size: 13px;
+    color: var(--fg);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .menu__btn b {
+    font-weight: 500;
+  }
+
+  .menu__btn:active {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  .menu__foot {
+    margin-top: auto;
+    padding-top: 36px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .menu__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+  }
+
+  .menu__socials a,
+  .menu__foot p a {
+    color: var(--fg);
+  }
+
+  .menu__foot p {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0 0;
+  }
+
+  .menu__foot p a {
+    margin-left: auto;
+  }
+
+  /* --- entrance: the panel slides, then its rows follow one after another -------------------- */
+
+  .menu__nav a,
+  .menu__group,
+  .menu__actions,
+  .menu__foot {
+    opacity: 0;
+    transform: translateY(18px);
+    transition:
+      opacity 0.5s var(--ease),
+      transform 0.6s var(--ease),
+      color 0.3s,
+      padding-left 0.4s var(--ease);
+  }
+
+  .menu.is-open .menu__nav a,
+  .menu.is-open .menu__group,
+  .menu.is-open .menu__actions,
+  .menu.is-open .menu__foot {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(0.12s + var(--i, 0) * 0.05s), calc(0.12s + var(--i, 0) * 0.05s), 0s, 0s;
+  }
+}
+
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  .menu__panel,
+  .menu__scrim,
+  .menu__nav a,
+  .menu__group,
+  .menu__actions,
+  .menu__foot {
+    transition: none;
+  }
+}
